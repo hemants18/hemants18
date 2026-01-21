@@ -1,0 +1,23 @@
+nohup: ignoring input
+  2025-12-15 07:13:05 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:13:05 App\Events\NewChatEvent .................... 7.96ms DONE
+  2025-12-15 07:13:05 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:13:05 App\Events\NewChatEvent .................... 6.46ms DONE
+  2025-12-15 07:13:05 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:13:05 App\Events\NewChatEvent .................... 7.54ms DONE
+  2025-12-15 07:13:38 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:13:38 App\Events\NewChatEvent .................... 2.54ms DONE
+  2025-12-15 07:13:53 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:13:53 App\Events\NewChatEvent .................... 1.97ms DONE
+  2025-12-15 07:20:02 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:20:02 App\Events\NewChatEvent .................... 3.51ms DONE
+  2025-12-15 07:20:56 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:20:56 App\Events\NewChatEvent .................... 2.32ms DONE
+  2025-12-15 07:25:03 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:25:03 App\Events\NewChatEvent .................... 3.39ms DONE
+  2025-12-15 07:25:03 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:25:03 App\Events\NewChatEvent .................... 2.78ms DONE
+  2025-12-15 07:30:36 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:30:36 App\Events\NewChatEvent .................... 4.66ms DONE
+  2025-12-15 07:32:21 App\Events\NewChatEvent ........................ RUNNING
+  2025-12-15 07:32:21 App\Events\NewChatEvent .................... 3.27ms DONE

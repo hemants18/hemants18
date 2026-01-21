@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  waapi:
+    build: .
+    container_name: waapi
+    restart: always
+    volumes:
+      - ./:/var/www/html/waapi
+    networks:
+      - waapi_network
+
+  node:
+    image: node:18
+    container_name: waapi_node
+    working_dir: /var/www/html/waapi
+    volumes:
+      - ./:/var/www/html/waapi
+    command: ["npm", "run", "dev"]
+    networks:
+      - waapi_network
+
+  waapi_nginx:
+    image: nginx:latest
+    container_name: waapi_nginx
+    restart: always
+    depends_on:
+      - waapi
+    volumes:
+      - ./:/var/www/html/waapi
+      - ./nginx-default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8085:8085"
+    networks:
+      - waapi_network
+
+networks:
+  waapi_network:
+    driver: bridge
