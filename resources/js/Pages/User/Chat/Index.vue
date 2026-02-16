@@ -5,7 +5,7 @@
                 <ChatTable :rows="rows" :filters="props.filters" :rowCount="props.rowCount" :ticketingIsEnabled="ticketingIsEnabled" :status="props?.status" :chatSortDirection="props.chat_sort_direction"/>
             </div>
             <div class="min-w-0 bg-cover flex flex-col chat-bg"  :class="contact ? 'h-screen md:w-[70%]' : 'md:h-screen md:w-[70%]'">
-                <ChatHeader v-if="contact" :ticketingIsEnabled="ticketingIsEnabled" :contact="contact" :displayContactInfo="displayContactInfo" :ticket="ticket" :addon="addon"  @toggleView="toggleContactView" @deleteThread="deleteThread" @closeThread="closeThread"/>
+                <ChatHeader v-if="contact" :ticketingIsEnabled="ticketingIsEnabled" :contact="contact" :displayContactInfo="displayContactInfo" :ticket="ticket" :addon="addon" :tags="tags" @toggleView="toggleContactView" @deleteThread="deleteThread" @closeThread="closeThread"/>
 
                 <div v-if="contact && !displayTemplate" class="flex-1 overflow-y-auto" ref="scrollContainer2">
                     <ChatThread v-if="!displayContactInfo && !loadingThread && !displayTemplate" :contactId="contact.id" :hasMoreMessages="hasMoreMessages" :initialNextPage="nextPage" :rows="chatThread" />
@@ -33,9 +33,9 @@
                 </div>
 
             </div>
-            <!--<div v-if="contact" class="md:w-[25%] min-w-0 bg-cover flex flex-col bg-white border-l">
-                <ChatContact v-if="contact" class="bg-white h-full" :contact="contact" />
-            </div>-->
+            <!-- <div v-if="contact" class="md:w-[25%] min-w-0 bg-cover flex flex-col bg-white border-l">
+                <ChatContact v-if="contact" class="bg-white h-full" :contact="contact" :tags="tags" />
+            </div> -->
         </div>
         <button class="hidden" ref="toggleNavbarBtn" @click="slotProps.toggleNavBar"></button>
     </AppLayout>
@@ -60,7 +60,7 @@
     // import Echo from 'laravel-echo';
     // import Pusher from 'pusher-js';
 
-    const props = defineProps(['rows', 'rowCount', 'pusherSettings', 'organizationId', 'isChatLimitReached', 'toggleNavBar', 'state', 'demoNumber', 'settings', 'status', 'chatThread', 'hasMoreMessages', 'nextPage', 'addon', 'contact', 'ticket', 'chat_sort_direction', 'filters' ,'templates', 'fields', 'locationSettings', 'simpleForm']);
+    const props = defineProps(['rows', 'rowCount', 'pusherSettings', 'organizationId', 'isChatLimitReached', 'toggleNavBar', 'state', 'demoNumber', 'settings', 'status', 'chatThread', 'hasMoreMessages', 'nextPage', 'addon', 'contact', 'ticket', 'chat_sort_direction', 'filters' ,'templates', 'fields', 'locationSettings', 'simpleForm', 'tags']);
     const rows = ref(props.rows);
     const rowCount = ref(props.rowCount);
     const scrollContainer = ref(null);

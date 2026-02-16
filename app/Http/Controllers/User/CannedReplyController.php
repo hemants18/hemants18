@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use DB;
 use App\Http\Controllers\Controller as BaseController;
+use App\Helpers\CustomHelper;
 use App\Http\Requests\StoreAutoReply;
 use App\Models\AutoReply;
 use App\Services\AutoReplyService;
@@ -22,8 +23,11 @@ class CannedReplyController extends BaseController
 
     public function index(Request $request){
         $rows = $this->autoReplyService->getRows($request);
-
-        return Inertia::render('User/CannedResponse/Index', [ 'title' => __('Canned replies'), 'allowCreate' => true, 'rows' => $rows, 'filters' => request()->all() ]);
+        $aimodule = CustomHelper::isModuleEnabled('AI Assistant');
+        $fbmodule = CustomHelper::isModuleEnabled('Flow builder');
+        return Inertia::render('User/CannedResponse/Index', [ 'title' => __('Canned replies'), 'allowCreate' => true, 'rows' => $rows, 'filters' => request()->all(), 
+            'aimodule' => $aimodule,
+            'fbmodule' => $fbmodule ]);
     }
 
     public function create(){

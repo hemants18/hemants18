@@ -45,7 +45,19 @@ class CampaignController extends BaseController
                     ->paginate(10)
             );
 
-            return Inertia::render('User/Campaign/Index', [ 'title'=> __('Campaigns'), 'allowCreate' => true, 'rows' => $rows, 'filters' => request()->all(['search'])]);
+
+            $campaigns = Campaign::where('deleted_at', null)->where('organization_id', $organizationId)->get();
+
+            $statusSummary = [
+                'total_message_count' => $campaigns->sum(fn ($c) => $c->contactsCount()),
+                'total_sent_count' => $campaigns->sum(fn ($c) => $c->sentCount()),
+                'total_delivered_count' => $campaigns->sum(fn ($c) => $c->deliveryCount()),
+                'total_read_count' => $campaigns->sum(fn ($c) => $c->readCount()),
+                'total_failed_count' => $campaigns->sum(fn ($c) => $c->failedCount()),
+            ];
+
+
+            return Inertia::render('User/Campaign/Index', [ 'title'=> __('Campaigns'), 'allowCreate' => true, 'rows' => $rows, 'statusSummary' => $statusSummary, 'filters' => request()->all(['search'])]);
         } else if($uuid == 'create'){
             $data['templates'] = Template::where('organization_id', $organizationId)
                 ->where('deleted_at', null)
@@ -106,6 +118,17 @@ class CampaignController extends BaseController
             'status', [
                 'type' => 'success', 
                 'message' => __('Campaign created successfully!')
+            ]
+        );
+    }
+
+    public function reSchedule(Request $request){
+        $this->campaignService->rescheduledCampaign($request);
+
+        return Redirect::route('campaigns')->with(
+            'status', [
+                'type' => 'success', 
+                'message' => __('Campaign reschedule successfully!')
             ]
         );
     }

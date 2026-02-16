@@ -110,7 +110,7 @@
                         </button>
                         <template #items>
                             <DropdownItemGroup>
-                                <!--<DropdownItem :href="'/templates/' + item.uuid">{{ $t('edit') }}</DropdownItem>-->
+                                <DropdownItem :href="'/templates/' + item.uuid">{{ $t('edit') }}</DropdownItem>
                                 <DropdownItem as="button" @click="openAlert(item.uuid)">{{ $t('Delete') }}</DropdownItem>
                             </DropdownItemGroup>
                         </template>

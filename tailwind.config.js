@@ -10,8 +10,8 @@ module.exports = {
   theme: { 
     extend: { 
         colors: { 
-            primary: '#034737', 
-            secondary: '#008000', 
+            primary: '#2a823f', 
+            secondary: '#116db0', 
         }, 
         fontFamily: { 
             'Outfit': ['Outfit', 'Helvetica', 'Arial', 'sans-serif'], 

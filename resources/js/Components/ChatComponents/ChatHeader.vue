@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, watchEffect, computed } from 'vue';
+    import { ref, watchEffect, computed, onMounted } from 'vue';
     import axios from 'axios';
     import { router, useForm, Link, usePage } from '@inertiajs/vue3'
     import AlertModal from '@/Components/AlertModal.vue';
@@ -7,6 +7,7 @@
     import DropdownItemGroup from '@/Components/DropdownItemGroup.vue';
     import DropdownItem from '@/Components/DropdownItem.vue';
     import FormSelectCombo from '@/Components/FormSelectCombo.vue';
+    import FormSelect from '@/Components/FormSelect.vue';
     import FormTextArea from '@/Components/FormTextArea.vue';
     import FormToggleSwitch from '@/Components/FormToggleSwitch.vue';
     import Modal from '@/Components/Modal.vue';
@@ -26,6 +27,9 @@
         ticket: {
             type: Object
         },
+        tags: {
+            type: Object
+        },
         addon: { type : Object },
     });
 
@@ -34,6 +38,9 @@
     const displayContact = ref(props.displayContactInfo);
     const ticketState = ref(null);
     const isOpenModal = ref(false);
+    const isLoading = ref(false);
+    const tagOptions = ref([]);
+    const isOpenTagModal = ref(false);
     const user = ref({ 
         'label' : props.ticket?.user ? props.ticket?.user?.full_name  : trans('Unassigned'),
         'value' : props.ticket?.user ? props.ticket?.user?.id  : 0, 
@@ -75,6 +82,11 @@
 
     const form3 = useForm({
         'ai_assistant': props.contact?.ai_assistance_enabled,
+    });
+
+    const form4 = useForm({
+        'tags': null,
+        'contact': null
     });
 
     const changeTicketStatus = (value) => {
@@ -123,6 +135,40 @@
             preserveState: true,
         });
     }
+
+    const submitForm4 = () => {
+        form4.contact = props.contact.uuid;
+        isLoading.value = true;
+        // if(form4.tags == '')
+        // {
+        //     form4.errors.tags = usePage().props.errors?.tag_id;
+        //     return;
+        // }
+        form4.post('/assign/tags', {
+            preserveScroll: true,
+            onSuccess: () => {
+                form4.reset();
+                isOpenTagModal.value = false;
+                
+                // form4.contact.error = usePage().props.errors?.tag_id;
+            },
+            onFinish: () => {
+                isLoading.value = false;
+            }
+        });
+    }
+
+    const transformOptions = (options) => {
+        return options.map((option) => ({
+            value: option.id,
+            label: option.name ? option.name :  '',
+        }));
+    };
+
+    onMounted(() => {
+        tagOptions.value = transformOptions(props.tags);
+    });
+
 </script>
 <template>
     <div class="h-20 bg-white border-b border-1 flex items-center justify-between px-4 md:px-4">
@@ -160,6 +206,7 @@
                     <template #items>
                         <DropdownItemGroup>
                             <DropdownItem @click="isOpenModal = true;" as="button">{{ $t('Add notes') }}</DropdownItem>
+                            <DropdownItem @click="isOpenTagModal = true;" as="button">{{ $t('Assign Tags') }}</DropdownItem>
                             <DropdownItem v-if="ticketState === 'open' && ticketingIsEnabled" @click="changeTicketStatus('closed')" as="button">{{ $t('Mark as closed') }}</DropdownItem>
                             <DropdownItem v-if="ticketState === 'closed' && ticketingIsEnabled" @click="changeTicketStatus('open')" as="button">{{ $t('Mark as open') }}</DropdownItem>
                             <DropdownItem @click="showAlert = true" as="button">{{ $t('Clear chat') }}</DropdownItem>
@@ -204,6 +251,28 @@
         </div>
     </Modal>
 
+    <Modal :label="'Assign Tags'" :isOpen="isOpenTagModal">
+        <div class="mt-5 grid grid-cols-1 gap-x-6 gap-y-4">
+            <form @submit.prevent="submitForm4()" class="">
+                <FormSelect v-model="form4.tags" :options="tagOptions" :required="true" :placeholder="$t('Select Tags')" :error="form4.errors.tags" :name="''" :class="'col-span-2'"/>
+
+                <!-- <p v-if="usePage().props.errors?.tag_id" class="text-red-500 text-xs mt-1">
+                    {{ usePage().props.errors?.tag_id }}
+                </p> -->
+
+                <div class="mt-4 flex">
+                    <button type="button" @click.self="isOpenTagModal = false" class="inline-flex justify-center rounded-md border border-transparent bg-slate-50 px-4 py-2 text-sm text-slate-500 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 mr-4">{{ $t('Cancel') }}</button>
+                    <button 
+                        :class="['inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2', { 'opacity-50': isLoading }]"
+                        :disabled="isLoading"
+                    >
+                        <svg v-if="isLoading" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8A8 8 0 0 1 12 20Z" opacity=".5"/><path fill="currentColor" d="M20 12h2A10 10 0 0 0 12 2V4A8 8 0 0 1 20 12Z"><animateTransform attributeName="transform" dur="1s" from="0 12 12" repeatCount="indefinite" to="360 12 12" type="rotate"/></path></svg>
+                        <span v-else>{{ $t('Save') }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </Modal>
     <AlertModal 
         v-model="showAlert" 
         :label="$t('Clear chat')" 

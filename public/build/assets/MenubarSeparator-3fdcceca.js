@@ -1,0 +1,1 @@
+import{h as r}from"./index-9cf65e6c.js";import{c as n}from"./utils-3f044a58.js";import{C as t,o as p,i as c,G as m,u as s}from"./app-586cbc19.js";const _=t({__name:"MenubarSeparator",props:{asChild:{type:Boolean},as:{}},setup(a){const e=a;return(o,l)=>(p(),c(s(r),m({class:s(n)("-mx-1 my-1 h-px bg-secondary",o.$attrs.class??"")},e),null,16,["class"]))}});export{_ as default};

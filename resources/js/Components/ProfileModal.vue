@@ -189,6 +189,8 @@
                                             <FormInput v-model="form1.email" :name="$t('Email')" :error="form1.errors.email" :type="'text'" :class="'sm:col-span-6'"/>
                                             <FormPhoneInput v-model="form1.phone" :name="$t('Phone')" :error="form1.errors.phone" :type="'text'" :class="'sm:col-span-6'"/>
 
+                                            <!-- <FormSelect name="Two-factor authentication" :class="'sm:col-span-6'" v-model="form1.status" :options="[]" :error="form1.errors.status" /> -->
+
                                             <div class="mt-4 flex">
                                                 <button type="button" @click="closeModal" class="inline-flex justify-center rounded-md border border-transparent bg-slate-50 px-4 py-2 text-sm text-slate-500 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 mr-4">{{ $t('Cancel') }}</button>
                                                 <button 

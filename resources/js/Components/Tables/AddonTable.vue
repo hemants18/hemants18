@@ -1,23 +1,15 @@
 <script setup>
     import { ref } from 'vue';
     import debounce from 'lodash/debounce';
-    import { router, useForm } from '@inertiajs/vue3';
+    import { Link, router, useForm } from '@inertiajs/vue3';
     import AlertModal from '@/Components/AlertModal.vue';
     import { useAlertModal } from '@/Composables/useAlertModal';
     import Modal from '@/Components/Modal.vue';
     import FormInput from '@/Components/FormInput.vue';
+    import FormSelect from '@/Components/FormSelect.vue';
     import FormToggleSwitch from '@/Components/FormToggleSwitch.vue';
-    import Table from '@/Components/Table.vue';
-    import TableHeader from '@/Components/TableHeader.vue';
-    import TableHeaderRow from '@/Components/TableHeaderRow.vue';
-    import TableHeaderRowItem from '@/Components/TableHeaderRowItem.vue';
-    import TableBody from '@/Components/TableBody.vue';
-    import TableBodyRow from '@/Components/TableBodyRow.vue';
-    import TableBodyRowItem from '@/Components/TableBodyRowItem.vue';
-    import Dropdown from '@/Components/Dropdown.vue';
-    import DropdownItemGroup from '@/Components/DropdownItemGroup.vue';
-    import DropdownItem from '@/Components/DropdownItem.vue';
     import Pagination from '@/Components/Pagination.vue';
+    import { trans } from 'laravel-vue-i18n';
 
     const props = defineProps({
         rows: {
@@ -38,13 +30,17 @@
     const isOpenInstallModal = ref(false);
     const isLoading = ref(false);
     const currentURL = ref(window.location.origin);
+    const isUpdateModal = ref(false);
 
     const emit = defineEmits(['edit', 'delete']);
 
     const form = useForm({'test': null});
     const form2 = useForm({
-        settings: {}
+        uuid: null,
+        settings: {},
+        is_active: null,
     });
+
     const form3 = useForm({
         uuid: null,
         purchase_code: null,
@@ -92,6 +88,7 @@
     const modalLogo = ref(null);
     const modalTitle = ref(null);
     const modalDescription = ref(null);
+    const installDescription = ref(null);
     const modalInputs = ref([]);
 
     const setupAddon = (item) => {
@@ -104,28 +101,32 @@
         form2.settings = {};
         let urlSegment = modalTitle.value.toLowerCase().replace(/ /g, '-');
         formUrl.value = '/admin/addons/setup/' + urlSegment;
+        form2.is_active = item.is_active;
+        form2.uuid = item.uuid;
 
         // Populate form2.settings with input fields
         inputFields.forEach(input => {
-            form2.settings[input.name] = getValueByKey(input.name);
+            form2.settings[input.name] = getValueByKey(input.name, input.element);
         });
 
         isOpenModal.value = true
     }
 
-    const setupInstallModal = (item) => {
+    const setupInstallModal = (item, type) => {
+        const metadata = item.metadata ? JSON.parse(item.metadata) : null;
         modalLogo.value = item.logo;
         modalTitle.value = item.name;
         modalDescription.value = item.description;
+        installDescription.value = type == 'extended' ? trans('Enter your extended license to install') : trans('Enter the addon license to install');
 
         form3.uuid = item.uuid
-        form3.addon = item.name;
-        isOpenInstallModal.value = true
+        form3.addon = metadata?.name || item.name; //Change this to null once everyone updates past v2.7
+        isOpenInstallModal.value = true;
     }
 
-    const getValueByKey = (key) => {
+    const getValueByKey = (key, type = null) => {
         const found = props.config.find(item => item.key === key);
-        return found ? found.value : '';
+        return found ? found.value : type == 'toggle' ? 0 : '';
     };
 
     const submitForm = () => {
@@ -171,13 +172,12 @@
             <div class="text-slate-500 border-b px-4 text-xs pt-2 pb-4">{{ addon.description }}</div>
             <div class="flex justify-between items-center px-4 pb-4 text-xs">
                 <div>
-                    <span class=" py-1 px-3 rounded-md text-slate-600" :class="addon.status == 0 ? 'bg-red-600 text-white' : 'bg-slate-50'">{{ addon.status == 1 ? $t('Installed') : $t('Not installed') }}</span>
+                    <span v-if="addon.status == 0" class=" py-1 px-3 rounded-md text-slate-600 bg-red-600 text-white">{{ $t('Not installed') }}</span>
+                    <span v-else-if="addon.status == 1 && addon.update_available == 0" class=" py-1 px-3 rounded-md text-slate-600 bg-slate-50">{{ $t('Installed') }}</span>
+                    <Link v-else-if="addon.status == 1 && addon.update_available == 1" href="/admin/updates" class="py-1 px-3 rounded-md text-slate-600 bg-green-600 text-white">{{ $t('Update available') }}</Link>
                 </div>
                 <div>
-                    <button v-if="addon.status == 0" @click="setupInstallModal(addon)" class="rounded-full border-2 w-full px-10 py-2 hover:border-secondary hover:bg-secondary hover:text-white text-secondary">{{ $t('Install') }}</button>
-
-                    <!-- <button v-if="addon.status == 0" @click="setupAddon(addon)" class="rounded-full border-2 w-full px-10 py-2 hover:border-secondary hover:bg-secondary hover:text-white text-secondary">{{ $t('Install') }}</button> -->
-
+                    <button v-if="addon.status == 0" @click="setupInstallModal(addon, addon.license)" class="rounded-full border-2 w-full px-10 py-2 hover:border-secondary hover:bg-secondary hover:text-white text-secondary">{{ $t('Install') }}</button>
                     <button v-else @click="setupAddon(addon)" class="rounded-full border-2 w-full px-10 py-2 hover:border-secondary hover:bg-secondary hover:text-white text-secondary">{{ $t('Setup') }}</button>
                 </div>
             </div>
@@ -206,6 +206,14 @@
                             <div class="text-sm mb-2">{{ $t(input.label) }}</div>
                             <FormToggleSwitch v-if="input.element == 'toggle'" v-model="form2.settings[input.name]"/>
                         </div>
+                        <FormSelect v-if="input.element == 'select'" v-model="form2.settings[input.name]" :name="$t(input.label)" :type="'text'"  :options="input.options" :error="form2.errors[`settings.${input.name}`]" :class="input.class"/>
+                        <div v-if="input.description">
+                            <span class="text-[11px] text-gray-500">{{ input.description }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-sm mb-2">{{ $t('Enable/disable addon') }}</div>
+                        <FormToggleSwitch v-model="form2.is_active"/>
                     </div>
                     <div v-if="modalTitle == 'Embedded Signup'" class="bg-orange-100 p-2 rounded-md shadow-sm mb-1 col-span-2">
                         <div class="flex items-center gap-x-1 border-b border-slate-500 pb-2 mb-2">
@@ -247,7 +255,7 @@
             <form @submit.prevent="submitForm3()">
                 <div class="grid gap-x-6 sm:grid-cols-2">
                     <h4 class="text-sm">{{ $t('Envato purchase code') }}</h4>
-                    <span class="col-span-2 text-xs text-slate-600 mb-2">{{ $t('Enter your extended license or the addon license to install') }}</span>
+                    <span class="col-span-2 text-xs text-slate-600 mb-2">{{ installDescription }}</span>
                     <FormInput v-model="form3.purchase_code" :error="form3.errors.purchase_code" :name="''" :type="'text'" :class="'col-span-2'" />
                 </div>
                 <div class="mt-5 border-t pt-5 flex">

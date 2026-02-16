@@ -7,13 +7,17 @@
         </span>
     </div>
     <div v-else class="flex items-center justify-between px-5 pt-5 h-20 mb-1">
-        <Link href="/dashboard">
-            <img :src="'/media/' + getValueByKey('logo')" alt="{{ getValueByKey('company_name') }}" class="w-32 object-contain h-full ps-2">
+        <Link v-if="menuIconsOnly === false" href="/dashboard">
+            <img :src="'/media/' + getValueByKey('logo')" :alt="getValueByKey('company_name')" class="w-32 object-contain h-full ps-2">
+        </Link>
+
+        <Link v-else href="/dashboard">
+            <img :src="'/media/' + getValueByKey('favicon')" :alt="getValueByKey('company_name')" class="w-32 object-contain h-full ps-2">
         </Link>
         <span v-if="isSidebarOpen === true" @click="closeSidebar()">
             <svg xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"><path d="M5 5L12 5L19 5"><animate fill="freeze" attributeName="d" dur="0.4s" values="M5 5L12 5L19 5;M5 5L12 12L19 5"/></path><path d="M5 12H19"><animate fill="freeze" attributeName="d" dur="0.4s" values="M5 12H19;M12 12H12"/></path><path d="M5 19L12 19L19 19"><animate fill="freeze" attributeName="d" dur="0.4s" values="M5 19L12 19L19 19;M5 19L12 12L19 19"/></path></g></svg>
         </span>
-        <!-- <LangToggle class="text-black" :languages="languages" :currentLanguage="currentLanguage" /> -->
+        <LangToggle class="text-black" :languages="languages" :currentLanguage="currentLanguage" />
     </div>
     <div class="flex-grow space-y-3 px-2 overflow-y-scroll">
         <div class="flex-1">
@@ -148,13 +152,18 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 20 20"><path fill="currentColor" fill-rule="evenodd" d="M5 2.643v14.765c.092.32.299.511.619.572c.32.061.633-.024.94-.255l8.107-6.993A.944.944 0 0 0 15 10a.94.94 0 0 0-.334-.73L6.58 2.295c-.232-.197-.639-.383-1.061-.253c-.282.087-.455.287-.519.6"/></svg>
                     </span>
                 </div>
+                <div @click="isOpenOrganizationModal = true" class="flex gap-x-8 bg-slate-50 hover:bg-slate-200 rounded-lg py-1 justify-between items-center w-full cursor-pointer border border-slate-100 pl-1 pr-2 py-3">
+                    <div class="w-full">
+                        <h3 class="text-center">Create Organization</h3>
+                    </div>
+                </div>
             </div>
             <div class="mt-4 border-t pt-4">
                 <button type="button" @click.self="isLocationSwitchModalOpen = false" class="inline-flex justify-center rounded-md border border-transparent bg-slate-50 px-4 py-2 text-sm text-slate-500 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 mr-4">{{ $t('Cancel') }}</button>
             </div>
         </div>
     </Modal>
-    <ProfileModal :user="props.user" :organization="props.organization" :isOpen="isOpen" role="user" @close="closeModal()"/>
+    <ProfileModal :user="props.user" :languages="languages" :currentLanguage="currentLanguage" :organization="props.organization" :isOpen="isOpen" role="user" @close="closeModal()"/>
     <OrganizationModal v-model:modelValue="isOpenOrganizationModal"/>
 </template>
 <script setup>

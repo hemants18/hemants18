@@ -2,15 +2,44 @@
     <AppLayout>
         <div class="bg-white md:bg-inherit pt-10 px-4 md:pt-8 md:p-8 rounded-[5px] text-[#000] h-full md:overflow-y-auto">
             <div class="flex justify-between">
-                <div>
+                <!-- <div>
                     <h2 class="text-xl mb-1">{{ $t('Team') }}</h2>
                     <p class="mb-6 flex items-center text-sm leading-6">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11v5m0 5a9 9 0 1 1 0-18a9 9 0 0 1 0 18Zm.05-13v.1h-.1V8h.1Z"/></svg>
                         <span class="ml-1 mt-1">{{ $t('Add edit and delete accounts in your team') }}</span>
                     </p>
-                </div>
+                </div> -->
+
                 <div>
-                    <button @click="openModal()" class="rounded-md bg-indigo-600 px-3 py-2 text-sm text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ $t('Invite user') }}</button>
+                    <h2 class="text-xl mb-1">{{ $t('Team') }}</h2>
+
+                    <p class="flex items-center text-sm leading-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 11v5m0 5a9 9 0 1 1 0-18a9 9 0 0 1 0 18Zm.05-13v.1h-.1V8h.1Z"/>
+                        </svg>
+                        <span class="ml-1 mt-1">
+                            {{ $t('Add, edit and delete accounts in your team') }}
+                        </span>
+                    </p>
+
+                    <p class="mb-6 flex items-center leading-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 11v5m0 5a9 9 0 1 1 0-18a9 9 0 0 1 0 18Zm.05-13v.1h-.1V8h.1Z"/>
+                        </svg>
+
+                        <span class="ml-1 text-sm mt-1">
+                            {{ $t('Team') }} {{ $t('Plan details') }}:
+                            <small class="text-indigo-600 ml-1">
+                                {{ plan.label }}
+                            </small>
+                        </span>
+                    </p>
+                </div>
+
+                <div>
+                    <button @click="openModal()" v-if="plan.isUnlimited || plan.remaining > 0" class="rounded-md bg-indigo-600 px-3 py-2 text-sm text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ $t('Invite user') }}</button>
                 </div>
             </div>
             <!-- Table Component-->
@@ -43,6 +72,10 @@
     import FormInput from '@/Components/FormInput.vue';
     import FormSelect from '@/Components/FormSelect.vue';
     import { trans } from 'laravel-vue-i18n';
+    import { usePlan } from '@/Composables/usePlan';
+    
+    const { getLimit } = usePlan()
+    const plan = getLimit('team_limit')
 
     const props = defineProps({ rows: Object, filters: Object });
     const isOpenFormModal = ref(false);
@@ -54,6 +87,8 @@
         email: null,
         role: null,
     });
+
+    
 
     const roleOptions = [
         { value: 'manager', label: trans('Manager') },
@@ -94,4 +129,5 @@
             });
         }
     }
+
 </script>

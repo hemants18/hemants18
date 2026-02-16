@@ -4,7 +4,7 @@
         <div class="flex justify-center">
           <div class="w-[20em] mt-40">
             <div class="flex justify-center mb-5">
-              <Link href="/">
+              <a href="/">
                 <img
                   class="max-w-[180px]"
                   v-if="props.companyConfig.logo"
@@ -14,7 +14,7 @@
                 <h4 v-else class="text-2xl mb-2">
                   {{ props.companyConfig.company_name }}
                 </h4>
-              </Link>
+              </a>
             </div>
             <h1 class="text-2xl text-center">{{ $t('Login to your account') }}</h1>
             <div class="text-center text-sm text-slate-500">

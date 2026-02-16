@@ -12,7 +12,7 @@
     import Pagination from '@/Components/Pagination.vue';
     import { trans } from 'laravel-vue-i18n';
 
-    const props = defineProps(['rows', 'filters', 'type']);
+    const props = defineProps(['rows', 'filters', 'type', 'plan']);
 
     const params = ref({
         id: props.filters?.id,
@@ -221,7 +221,7 @@
                     </button>
                     <template #items>
                         <DropdownItemGroup>
-                            <DropdownItem as="button" @click="isOpenModal = true">{{ $t('Import rows') }}</DropdownItem>
+                            <DropdownItem as="button" v-if="plan.isUnlimited || plan.remaining > 0"  @click="isOpenModal = true">{{ $t('Import rows') }}</DropdownItem>
                             <DropdownItem as="button"><a :href="type === 'contact' ? '/contacts/export' : '/contact-groups/export'" class="w-full h-full">{{ $t('Export to xlsx') }}</a></DropdownItem>
                             <DropdownItem v-if="selectedCount > 0" as="button" @click="openAlert()">{{ $t('Delete selected') }}</DropdownItem>
                             <DropdownItem as="button" @click="openAlert('all')">{{ $t('Delete all') }}</DropdownItem>
@@ -240,7 +240,7 @@
             <Link href="/contact-groups" class="pt-3 w-1/2 text-center pb-1 hover:bg-slate-50" :class="{ 'bg-gray-50 border-b-2 border-slate-700': $page.url.startsWith('/contact-groups') }">{{ $t('Groups') }}</Link>
         </div>
     </div>
-    <div class="flex-grow overflow-y-auto h-[65vh]" ref="scrollContainer">
+    <div class="flex-grow overflow-y-auto mt-3 h-[65vh]" ref="scrollContainer">
             <div v-if="type === 'contact'" @click="getRow(contact.uuid)" class="flex space-x-2 hover:bg-gray-50 cursor-pointer px-4 py-3 border-b" :class="contact.isChecked ? 'bg-gray-50' : ''" v-for="(contact, index) in rows.data" :key="index">
             <div>
                 <label @click.stop="toggleCheckbox(contact.uuid)" for="myCheckbox" class="cursor-pointer">

@@ -48,30 +48,48 @@ class CampaignService
                 
                         foreach ($request->header['parameters'] as $key => $parameter) {
                             if ($parameter['selection'] === 'upload') {
-                                $path = $parameter['value']->store('public');
-                                $imageUrl = config('app.url') . '/media/' . $path;
+                                // $path = $parameter['value']->store('public');
+                                // $imageUrl = config('app.url') . '/media/' . $path;
+
+                                $storage = Setting::where('key', 'storage_system')->first()->value;
+                                $fileName = $parameter['value']->getClientOriginalName();
+                                $fileContent = $parameter['value'];
+
+                                if($storage === 'local'){
+                                    $file = Storage::disk('local')->put('public', $fileContent);
+                                    $mediaFilePath = $file;
+                    
+                                    $mediaUrl = rtrim(config('app.url'), '/') . '/media/' . ltrim($mediaFilePath, '/');
+                                } else if($storage === 'aws') {
+                                    $file = $parameter['value'];
+                                    $uploadedFile = $file->store('uploads/media/sent/' . $organizationId, 's3');
+                                    $mediaFilePath = Storage::disk('s3')->url($uploadedFile);
+                    
+                                    $mediaUrl = $mediaFilePath;
+                                }
 
                                 // Retrieve media information
-                                $mediaInfo = $this->getMediaInfo($path);
+                                $contentType = $this->getContentTypeFromUrl($mediaUrl);
+                                $mediaSize = $this->getMediaSizeInBytesFromUrl($mediaUrl);
 
                                 //save media
                                 $chatMedia = new ChatMedia;
-                                $chatMedia->name = $mediaInfo['name'];
-                                $chatMedia->path = $path;
-                                $chatMedia->type = $mediaInfo['type'];
-                                $chatMedia->size = $mediaInfo['size'];
+                                $chatMedia->name = $fileName;
+                                $chatMedia->path = $mediaUrl;
+                                $chatMedia->type = $contentType;
+                                $chatMedia->size = $mediaSize;
                                 $chatMedia->created_at = now();
                                 $chatMedia->save();
 
                                 $mediaId = $chatMedia->id;
                             } else {
-                                $imageUrl = $parameter['value'];
+                                $mediaUrl = $parameter['value'];
                             }
                 
                             $metadata['header']['parameters'][] = [
                                 'type' => $parameter['type'],
                                 'selection' => $parameter['selection'],
-                                'value' => $imageUrl,
+                                'value' => $mediaUrl,
                             ];
                         }
                     }
@@ -84,7 +102,7 @@ class CampaignService
                 $metadata['buttons'] = $request->buttons;
                 $metadata['media'] = $mediaId;
 
-                //dd($metadata);
+                $scheduledAt = $request->skip_schedule ? Carbon::now('UTC') : Carbon::parse($request->time, $timezone)->setTimezone('UTC');
 
                 //Create campaign
                 $campaign = new Campaign;
@@ -95,7 +113,7 @@ class CampaignService
                 $campaign['metadata'] = json_encode($metadata);
                 $campaign['created_by'] = auth()->user()->id;
                 $campaign['status'] = 'scheduled';
-                $campaign['scheduled_at'] = $request->skip_schedule ? now() : $request->time;
+                $campaign['scheduled_at'] = $scheduledAt;
                 $campaign->save();
 
                 if($campaign && $campaign->scheduled_at <= now()){
@@ -106,6 +124,69 @@ class CampaignService
             // dd($e);
             // Handle the exception here if needed.
             // The transaction has already been rolled back automatically.
+
+            Log::error('Failed to store campaign', [
+                'error_message' => $e->getMessage(),
+                'organization_id' => $organizationId,
+                'template' => $request->template,
+                'contacts' => $request->contacts,
+                'user_id' => auth()->user()->id,
+                'stack_trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+
+    public function rescheduledCampaign(object $request)
+    {
+        $organizationId = session()->get('current_organization');
+        $campaign = Campaign::where('uuid',$request->uuid)->first();
+
+        $timezoneQuery = Setting::where('key', 'timezone')->first();
+        $timezone = $timezoneQuery ? $timezoneQuery->value : 'UTC';
+
+        // create new group for select customer
+        $ContactGroup = new ContactGroup;
+        $ContactGroup->organization_id = $organizationId;
+        $ContactGroup->name = $request->mode.'_'.Carbon::now($timezone)->format('ymdhi');
+        $ContactGroup->created_by = auth()->user()->id;
+        $ContactGroup->created_at = Carbon::now($timezone);
+        if($ContactGroup->save()){
+
+            $contactIds = CampaignLog::whereIn('id',$request->contact_ids)->pluck('contact_id')->toArray();
+            
+            if($contactIds)
+            {
+                //assign group to customer
+                // $ContactGroup->contacts()->whereIn('id', $contactIds)->update([
+                //     'contact_group_id' => $ContactGroup->id,
+                //     'updated_at' => Carbon::now($timezone),
+                // ]);
+
+                Contact::where('organization_id', $organizationId)
+                ->whereIn('id', $contactIds)
+                ->update([
+                    'contact_group_id' => $ContactGroup->id,
+                    'updated_at' => Carbon::now($timezone),
+                ]);
+            }
+        }
+
+        if($campaign)
+        {
+            $scheduledAt = !$request->schedule_at ? Carbon::now('UTC') : Carbon::parse($request->schedule_at, $timezone)->setTimezone('UTC');
+            $db = new Campaign;
+            $db['organization_id'] = $organizationId;
+            $db['name'] = $campaign->name;
+            $db['template_id'] = $campaign->template_id;
+            $db['contact_group_id'] = $ContactGroup->id;
+            $db['metadata'] = $campaign->metadata;
+            $db['created_by'] = auth()->user()->id;
+            $db['status'] = 'scheduled';
+            $db['scheduled_at'] = $scheduledAt;
+            if($db->save())
+            {
+                $this->sendCampaign();
+            }
         }
     }
 
@@ -131,5 +212,34 @@ class CampaignService
             'deleted_by' => auth()->user()->id,
             'deleted_at' => now()
         ]);
+    }
+
+    private function getContentTypeFromUrl($url) {
+        try {
+            // Make a HEAD request to fetch headers only
+            $response = Http::head($url);
+    
+            // Check if the Content-Type header is present
+            if ($response->hasHeader('Content-Type')) {
+                return $response->header('Content-Type');
+            }
+    
+            return null;
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Error fetching headers: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    private function getMediaSizeInBytesFromUrl($url) {
+        $url = ltrim($url, '/');
+        $imageContent = file_get_contents($url);
+    
+        if ($imageContent !== false) {
+            return strlen($imageContent);
+        }
+    
+        return null;
     }
 }

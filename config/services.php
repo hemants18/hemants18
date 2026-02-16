@@ -59,6 +59,10 @@ return [
     'razorpay' => [
         'class' => Modules\Razorpay\Controllers\ProcessPayment::class,
     ],
+
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
 ];
 
 

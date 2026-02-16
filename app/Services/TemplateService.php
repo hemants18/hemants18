@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Events\NewChatEvent;
 use App\Http\Resources\TemplateResource;
+use App\Helpers\CustomHelper;
 use App\Models\Organization;
 use App\Models\Template;
 use App\Services\WhatsappService;
@@ -95,6 +96,7 @@ class TemplateService
     {
         if ($request->isMethod('get')){
             $data['languages'] = config('languages');
+            $data['aimodule'] = CustomHelper::isModuleEnabled('AI Assistant');
             $data['settings'] = Organization::where('id', $this->organizationId)->first();
             return Inertia::render('User/Templates/Add', $data);
         } else if ($request->isMethod('post')){
@@ -110,6 +112,25 @@ class TemplateService
 
             return $this->whatsappService->createTemplate($request);
         }
+    }
+
+    public function updateTemplate(Request $request, $uuid)
+    {
+        // if ($response = $this->abortIfDemo('update')) {
+        //     return $response;
+        // }
+
+        $validator = Validator::make($request->all(),[
+            'name' => 'required',
+            'category' => 'required',
+            'language' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false,'message'=>'Some required fields have not been filled','errors'=>$validator->messages()->get('*')]);
+        }
+
+        return $this->whatsappService->updateTemplate($request, $uuid);
     }
 
     public function deleteTemplate($uuid)

@@ -1,19 +1,22 @@
 <script setup>
     import axios from 'axios';
-    import { ref, watchEffect } from 'vue';
+    import { ref, watchEffect, onMounted } from 'vue';
     import { Link, router, useForm, usePage } from '@inertiajs/vue3';
     import Dropdown from '@/Components/Dropdown.vue';
     import DropdownItemGroup from '@/Components/DropdownItemGroup.vue';
     import DropdownItem from '@/Components/DropdownItem.vue';
     import FormTextArea from '@/Components/FormTextArea.vue';
+    import FormSelect from '@/Components/FormSelect.vue';
     import Modal from '@/Components/Modal.vue';
     import { trans } from 'laravel-vue-i18n';
     
-    const props = defineProps(['contact', 'fields', 'locationSettings']);
+    const props = defineProps(['contact', 'fields', 'locationSettings','tags']);
     const contact = ref(props.contact);
     const metadata = (props.contact.metadata !== null && props.contact.metadata !== '') ? JSON.parse(props.contact.metadata) : {};
     const isOpenModal = ref(false);
+    const isOpenTagModal = ref(false);
     const isLoading = ref(false);
+    const tagOptions = ref([]);
     const notes = ref(contact.notes);
 
     watchEffect(() => {
@@ -28,6 +31,11 @@
 
     const form = useForm({
         'notes': null,
+        'contact': null
+    });
+
+    const form2 = useForm({
+        'tags': null,
         'contact': null
     });
 
@@ -55,8 +63,37 @@
             }
         });
     }
+
+    const submitForm2 = () => {
+        form2.contact = contact.value.uuid;
+        isLoading.value = true;
+
+        form2.post('/assign/tags', {
+            onSuccess: () => {
+                form2.reset();
+                isOpenTagModal.value = false;
+                // contact.value = usePage().props.flash?.status?.contact;
+            },
+            onFinish: () => {
+                isLoading.value = false;
+            }
+        });
+    }
+
+    const transformOptions = (options) => {
+        return options.map((option) => ({
+            value: option.id,
+            label: option.name ? option.name :  '',
+        }));
+    };
+
+    onMounted(() => {
+        tagOptions.value = transformOptions(props.tags);
+    });
+
 </script>
 <template>
+
     <div class="overflow-y-auto h-screen w-full">
         <div class="pb-6 border-b">
             <div class="flex justify-center w-full">
@@ -188,6 +225,25 @@
                 <span class="font-light text-gray-500 text-xs">{{ item.created_at }}</span>
             </div>
         </div>
+
+        <div class="border-t py-4 px-4 space-y-1">
+            <div class="flex">
+                <div class="mb-3">
+                    <h4 class="mb-0">Tags</h4>
+                    <span class="text-xs text-slate-500">Assign Tags for your team</span>
+                </div>
+                <div class="ml-auto">
+                    <button @click="isOpenTagModal = true;" class="bg-slate-50 p-2 rounded-full shadow-md hover:bg-slate-100 hover:shadow-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="currentColor" fill-rule="evenodd" d="M10 3a1 1 0 0 1 1 1v5h5a1 1 0 1 1 0 2h-5v5a1 1 0 1 1-2 0v-5H4a1 1 0 1 1 0-2h5V4a1 1 0 0 1 1-1" clip-rule="evenodd"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div v-for="(item, index) in contact.tags" :key="index" class="bg-gray-50 text-sm p-2 rounded-md" :style="{backgroundColor: item?.tag?.color + '20',color: item?.tag?.color}">
+                <div class="mb-1 font-regular">{{ item?.tag?.name }}</div>
+                <span class="font-light text-gray-500 text-xs">{{ item?.tag?.created_at }}</span>
+            </div>
+        </div>
+
         <div v-if="locationSettings === 'after' && fields.length > 0" class="pr-20 border-gray-300 border-t py-4">
             <div v-for="(input, index) in props.fields" class="grid grid-cols-2 space-x-8 text-[14px]">
                 <div class="text-right text-slate-500 pb-2">
@@ -218,4 +274,23 @@
             </form>
         </div>
     </Modal>
+
+    <Modal :label="'Assign Tags'" :isOpen="isOpenTagModal">
+        <div class="mt-5 grid grid-cols-1 gap-x-6 gap-y-4">
+            <form @submit.prevent="submitForm2()" class="">
+                <FormSelect v-model="form2.tags" :options="tagOptions" :required="true" :placeholder="$t('Select Tags')" :error="form2.errors.tags" :name="''" :class="'col-span-2'"/>
+                <div class="mt-4 flex">
+                    <button type="button" @click.self="isOpenTagModal = false" class="inline-flex justify-center rounded-md border border-transparent bg-slate-50 px-4 py-2 text-sm text-slate-500 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 mr-4">{{ $t('Cancel') }}</button>
+                    <button 
+                        :class="['inline-flex justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2', { 'opacity-50': isLoading }]"
+                        :disabled="isLoading"
+                    >
+                        <svg v-if="isLoading" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8A8 8 0 0 1 12 20Z" opacity=".5"/><path fill="currentColor" d="M20 12h2A10 10 0 0 0 12 2V4A8 8 0 0 1 20 12Z"><animateTransform attributeName="transform" dur="1s" from="0 12 12" repeatCount="indefinite" to="360 12 12" type="rotate"/></path></svg>
+                        <span v-else>{{ $t('Save') }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </Modal>
+
 </template>

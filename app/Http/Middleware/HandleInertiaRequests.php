@@ -7,6 +7,7 @@ use App\Models\Chat;
 use App\Models\Language;
 use App\Models\Organization;
 use App\Models\Setting;
+use App\Models\Subscription;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -48,6 +49,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $organization = array();
+        $subscription = array();
         $organizations = array();
         $teams = array();
         $user = $request->user();
@@ -88,6 +90,8 @@ class HandleInertiaRequests extends Middleware
             $organizations = Team::with('organization')->where('user_id', $user->id)->get();
             $organization = Organization::where('id', session('current_organization'))->first();
 
+            $subscription = Subscription::with('plan')->where('organization_id', session('current_organization'))->where('valid_until','>=',now())->first();
+
             $unreadMessages = Chat::where('organization_id', $organizationId)
                 ->where('type', 'inbound')
                 ->where('deleted_at', NULL)
@@ -104,7 +108,7 @@ class HandleInertiaRequests extends Middleware
         //     $languages = array();
         // }
 
-        $keys = ['favicon', 'logo', 'company_name', 'address', 'currency' , 'email', 'phone', 'socials', 'trial_period', 'recaptcha_site_key', 'recaptcha_active', 'google_analytics_tracking_id', 'google_maps_api_key'];
+        $keys = ['favicon', 'logo', 'company_name', 'address', 'currency' , 'email', 'phone', 'socials', 'trial_period', 'trial_limits', 'recaptcha_site_key', 'recaptcha_active', 'google_analytics_tracking_id', 'google_maps_api_key','marketing','utility','service','authentication'];
         $config = Setting::whereIn('key', $keys)->get();
         $languages = Language::where('deleted_at', null)->where('status', 'active')->get();
         $isRtl = false;
@@ -117,6 +121,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user ?: null,
             ],
+            'subscription' => $subscription,
             'organization' => $organization,
             'organizations' => $organizations,
             'unreadMessages' => $unreadMessages,

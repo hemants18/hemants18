@@ -50,6 +50,10 @@ if (is_dir(base_path('modules/FlowBuilder')) && class_exists(\Modules\FlowBuilde
     $providers[] = \Modules\FlowBuilder\Providers\FlowBuilderServiceProvider::class;
 }
 
+if (is_dir(base_path('modules/IntelliReply')) && class_exists(\Modules\IntelliReply\Providers\IntelliReplyServiceProvider::class)) {
+    $providers[] = \Modules\IntelliReply\Providers\IntelliReplyServiceProvider::class;
+}
+
 return [
 
     /*

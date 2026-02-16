@@ -223,6 +223,32 @@ class SubscriptionService
         // Ensure that amount due is not negative
         $amountDue = max(0, $amountDue);
 
+        //Apply coupon is amount due > 0
+        $coupon = [];
+        if($amountDue > 0){
+            $couponCode = session('applied_coupon');
+            $couponData = \App\Models\Coupon::where('code', $couponCode)
+                ->where('status', 'active')
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($couponData) {
+                if ($couponData->quantity_redeemed < $couponData->quantity) {
+                    $discount = ($amountDue * $couponData->percentage) / 100;
+                    $discount = min($discount, $amountDue);
+
+                    $coupon = [
+                        'code' => $couponData->code,
+                        'type' => 'percentage',
+                        'amount' => $couponData->percentage,
+                        'discount' => number_format($discount, 2)
+                    ];
+
+                    $amountDue = max(0, $amountDue - $discount);
+                }
+            }
+        }
+
         $response = [
             'isTaxInclusive' => $isTaxInclusive,
             'basePrice' => number_format($basePrice, 2),
@@ -240,6 +266,7 @@ class SubscriptionService
                 'available' => number_format($availableDebits, 2),
                 'total' => number_format($availableDebits, 2)
             ],
+            'coupon' => $coupon,
             'amountDue' => number_format($amountDue, 2)
         ];
 

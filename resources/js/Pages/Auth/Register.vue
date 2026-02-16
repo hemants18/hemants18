@@ -3,10 +3,10 @@
         <div class="flex justify-center items-center">
             <div class="w-[20em] md:w-[30em]">
                 <div class="flex justify-center mb-5">
-                    <Link href="/">
+                    <a href="/">
                         <img class="max-w-[180px]" v-if="props.companyConfig.logo" :src="'/media/' + props.companyConfig.logo" :alt="props.companyConfig.company_name">
                         <h4 v-else class="text-2xl mb-2">{{ props.companyConfig.company_name }}</h4>
-                    </Link>
+                    </a>
                 </div>
                 <h1 class="text-2xl text-center">{{ $t('Create account') }}</h1>
                 <div class="text-center text-sm text-slate-500">
@@ -24,6 +24,9 @@
                     <div class="mt-5">
                         <FormInput v-model="form.email" :name="$t('Email')" :error="form.errors.email" :type="'email'" :class="'sm:col-span-3'"/>
                     </div>
+                    <div class="mt-5">
+                        <FormPhoneInput v-model="form.phone" :name="$t('Phone')" :error="form.errors.phone" :type="'text'" :class="'sm:col-span-3'"/>
+                        </div>
                     <div class="mt-5 grid gap-x-6 gap-y-4 grid-cols-6">
                         <FormInput v-model="form.password" :name="$t('Password')" :error="form.errors.password" :type="'password'" :class="'col-span-3'"/>
                         <FormInput v-model="form.password_confirmation" :name="$t('Confirm password')" :error="form.errors.password_confirmation" :type="'password'" :class="'col-span-3'"/>
@@ -54,18 +57,21 @@
 <script setup>
     import { Link, useForm } from "@inertiajs/vue3";
     import FormInput from '@/Components/FormInput.vue';
+    import FormPhoneInput from '@/Components/FormPhoneInput.vue';
     import { defineProps, ref, onMounted, onUnmounted } from 'vue';
     import { useRecaptcha, unMountRecaptcha } from '../../Composables/ReCaptcha';
 
-    const props = defineProps(['flash', 'config', 'companyConfig']);
+    const props = defineProps(['flash', 'config', 'companyConfig','plan_uuid']);
 
     const isLoading = ref(false);
 
     const form = useForm({
+        plan_uuid: props.plan_uuid,
         first_name: null,
         last_name: null,
         organization_name: null,
         email: null,
+        phone: null,
         password: null,
         password_confirmation: null,
         recaptcha_response: null,

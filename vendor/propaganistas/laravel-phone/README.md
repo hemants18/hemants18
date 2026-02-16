@@ -1,11 +1,11 @@
 # Laravel Phone
 
-![Tests](https://github.com/Propaganistas/Laravel-Phone/workflows/Tests/badge.svg?branch=master)
+[![Tests](https://github.com/Propaganistas/Laravel-Phone/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/Propaganistas/Laravel-Phone/actions/workflows/tests.yml)
 [![Latest Stable Version](https://poser.pugx.org/propaganistas/laravel-phone/v/stable)](https://packagist.org/packages/propaganistas/laravel-phone)
 [![Total Downloads](https://poser.pugx.org/propaganistas/laravel-phone/downloads)](https://packagist.org/packages/propaganistas/laravel-phone)
 [![License](https://poser.pugx.org/propaganistas/laravel-phone/license)](https://packagist.org/packages/propaganistas/laravel-phone)
 
-Adds phone number functionality to Laravel based on the [PHP port](https://github.com/giggsey/libphonenumber-for-php) of [libphonenumber by Google](https://github.com/googlei18n/libphonenumber).
+Adds phone number functionality to Laravel based on the [PHP port](https://github.com/giggsey/libphonenumber-for-php-lite) of [libphonenumber by Google](https://github.com/googlei18n/libphonenumber).
 
 ## Table of Contents
 
@@ -17,7 +17,6 @@ Adds phone number functionality to Laravel based on the [PHP port](https://githu
     - [Formatting](#formatting)
     - [Number information](#number-information)
     - [Equality comparison](#equality-comparison)
-    - [Helper function](#helper-function)
 - [Database considerations](#database-considerations)
 
 ## Demo
@@ -37,7 +36,7 @@ The Service Provider gets discovered automatically by Laravel.
 In your languages directory, add an extra translation in every `validation.php` language file:
 
 ```php
-'phone' => 'The :attribute field contains an invalid number.',
+'phone' => 'The :attribute field must be a valid number.',
 ```
 
 ## Validation
@@ -82,6 +81,13 @@ To specify constraints on the number type, just append the allowed types to the 
 // 'phonefield'    => (new Phone)->type('mobile')
 ```
 The most common types are `mobile` and `fixed_line`, but feel free to use any of the types defined [here](https://github.com/giggsey/libphonenumber-for-php/blob/master/src/PhoneNumberType.php).
+
+Prepend a type with an exclamation mark to blacklist it instead. Note that you can never use whitelisted *and* blacklisted types at the same time.
+
+```php
+'phonefield'       => 'phone:!mobile',
+// 'phonefield'    => (new Phone)->notType('mobile')
+```
 
 You can also enable lenient validation by using the `LENIENT` parameter.
 With leniency enabled, only the length of the number is checked instead of actual carrier patterns.
@@ -132,7 +138,7 @@ public $casts = [
 ];
 ```
 
-In order to not encounter any unexpected issues when using these casts, please always validate any input using the [validation](#validation) rules previously described.
+**Important note:** Both casts expect __valid__ phone numbers in order to smoothly convert from/to PhoneNumber objects. Please validate phone numbers before setting them on a model. Refer to the [validation documentation](#validation) to learn how to validate phone numbers.
 
 #### ⚠️ Attribute assignment and `E164PhoneNumberCast`
 Due to the nature of `E164PhoneNumberCast` a valid country attribute is expected if the number is not passed in international format. Since casts are applied in the order of the given values, be sure to set the country attribute _before_ setting the phone number attribute. Otherwise `E164PhoneNumberCast` will encounter an empty country value and throw an unexpected exception.
@@ -170,6 +176,14 @@ use Propaganistas\LaravelPhone\PhoneNumber;
 (string) new PhoneNumber('012 34 56 78', 'BE');            // +3212345678
 ```
 
+Alternatively you can use the `phone()` helper function. It returns a `Propaganistas\LaravelPhone\PhoneNumber` instance or the formatted string if `$format` was provided:
+
+```php
+phone('+3212/34.56.78');                // PhoneNumber instance
+phone('012 34 56 78', 'BE');            // PhoneNumber instance
+phone('012 34 56 78', 'BE', $format);   // string
+```
+
 ### Formatting
 A PhoneNumber can be formatted in various ways:
 
@@ -179,7 +193,7 @@ $phone = new PhoneNumber('012/34.56.78', 'BE');
 $phone->format($format);       // See libphonenumber\PhoneNumberFormat
 $phone->formatE164();          // +3212345678
 $phone->formatInternational(); // +32 12 34 56 78
-$phone->formatRFC3966();       // +32-12-34-56-78
+$phone->formatRFC3966();       // tel:+32-12-34-56-78
 $phone->formatNational();      // 012 34 56 78
 
 // Formats so the number can be called straight from the provided country.
@@ -218,14 +232,6 @@ $phone->equals( $anotherPhoneObject )      // true/false
 $phone->notEquals('045 67 89 10', 'BE')    // true
 $phone->notEquals('+32 45 67 89 10')       // true
 $phone->notEquals( $anotherPhoneObject )   // true/false
-```
-
-### Helper function
-
-The package exposes the `phone()` helper function that returns a `Propaganistas\LaravelPhone\PhoneNumber` instance or the formatted string if `$format` was provided:
-
-```php
-phone($number, $country = [], $format = null)
 ```
 
 ## Database considerations
@@ -283,8 +289,8 @@ Example:
   public function saving(User $user)
   {
       if ($user->isDirty('phone') && $user->phone) {
-          $user->phone_normalized = preg_replace('[^0-9]', '', $user->phone);
-          $user->phone_national = preg_replace('[^0-9]', '', phone($user->phone, $user->phone_country)->formatNational());
+          $user->phone_normalized = preg_replace('/[^0-9]/', '', $user->phone);
+          $user->phone_national = preg_replace('/[^0-9]/', '', phone($user->phone, $user->phone_country)->formatNational());
           $user->phone_e164 = phone($user->phone, $user->phone_country)->formatE164();
       }
   }
@@ -297,8 +303,8 @@ Example:
   ```php
   // $search holds the search term
   User::where(function($query) use ($search) {
-    $query->where('phone_normalized', 'LIKE', preg_replace('[^0-9]', '', $search) . '%')
-          ->orWhere('phone_national', 'LIKE', preg_replace('[^0-9]', '', $search) . '%')
-          ->orWhere('phone_e164', 'LIKE', preg_replace('[^+0-9]', '', $search) . '%')
+    $query->where('phone_normalized', 'LIKE', preg_replace('/[^0-9]/', '', $search) . '%')
+          ->orWhere('phone_national', 'LIKE', preg_replace('/[^0-9]/', '', $search) . '%')
+          ->orWhere('phone_e164', 'LIKE', preg_replace('/[^+0-9]/', '', $search) . '%')
   });
   ```

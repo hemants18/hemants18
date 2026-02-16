@@ -8,6 +8,7 @@ use App\Models\Organization;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\Subscription;
+use App\Models\SubscriptionPlan;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\OrganizationService;
@@ -135,11 +136,13 @@ class UserService
                 $config = Setting::where('key', 'trial_period')->first();
                 $has_trial = isset($config->value) && $config->value > 0 ? true : false;
 
+                $plan = SubscriptionPlan::where('uuid',$request->input('plan_uuid'))->first();
+
                 //Create Subscription
                 Subscription::create([
                     'organization_id' => $newOrganization->id,
-                    'status' => $has_trial ? 'trial' : 'active',
-                    'plan_id' => null,
+                    'status' => $plan ? 'active' : ($has_trial ? 'trial' : 'active'),
+                    'plan_id' => $plan ? $plan->id : null,
                     'start_date' => now(),
                     'valid_until' => $has_trial ? date('Y-m-d H:i:s', strtotime('+' . $config->value . ' days')) : now(),
                 ]);

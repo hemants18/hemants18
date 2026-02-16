@@ -43,6 +43,7 @@
     "Subscribe": "Subscribe",
     "Add payment": "Add Payment",
     "Setup whatsapp": "Setup WhatsApp",
+    "embeddedSignup whatsapp": "Embedded Signup WhatsApp",
     "Setup your whatsapp API to start using your instance": "Setup your WhatsApp API to start using your instance.",
     "Setup team": "Setup Team",
     "Dismiss notification": "Dismiss Notification",
@@ -481,6 +482,13 @@
     "Question": "Question",
     "Answer": "Answer",
     "Search FAQs": "Search FAQS",
+
+    "Blogs": "Blogs",
+    "Add Blog": "Add Blog",
+    "Create Blog": "Create Blog",
+    "Update Blog": "Update Blog",
+    "Search Blog": "Search Blog",
+
     "Reviews": "Reviews",
     "View, add, edit or delete reviews": "View, add, edit or delete reviews",
     "Add review": "Add Review",
@@ -795,7 +803,7 @@
 
 
 
-    
+    "Content body generate with AI" : "Content body generate with AI",
     "template": "Template",
     "match_value": "Match Value",
     "use_input_value": "Use Input Value",

@@ -316,7 +316,7 @@ class AutoReplyService
         $config = $config ? json_decode($config, true) : [];
 
         $accessToken = $config['whatsapp']['access_token'] ?? null;
-        $apiVersion = 'v18.0';
+        $apiVersion = config('graph.api_version');
         $appId = $config['whatsapp']['app_id'] ?? null;
         $phoneNumberId = $config['whatsapp']['phone_number_id'] ?? null;
         $wabaId = $config['whatsapp']['waba_id'] ?? null;

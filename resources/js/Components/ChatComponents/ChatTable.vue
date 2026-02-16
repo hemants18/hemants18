@@ -6,6 +6,10 @@
     import Pagination from '@/Components/Pagination.vue';
     import TicketStatusToggle from '@/Components/TicketStatusToggle.vue';
     import SortDirectionToggle from '@/Components/SortDirectionToggle.vue';
+    import { usePlan } from '@/Composables/usePlan';
+    
+    const { getLimit } = usePlan()
+    const plan = getLimit('message_limit')
 
     const props = defineProps({
         rows: {
@@ -31,8 +35,15 @@
     });
 
     const isSearching = ref(false);
+    
     const selectedContact = ref(null);
     const emit = defineEmits(['view']);
+
+    const showSearch = ref(false)
+
+    const displaysearchFilter = () => {
+        showSearch.value = !showSearch.value
+    }
 
     function viewChat(contact) {
         selectedContact.value = contact;
@@ -52,6 +63,7 @@
         const formatMap = {
             'text/plain': 'TXT',
             'application/pdf': 'PDF',
+            'application/powerpoint': 'PPT',
             'application/vnd.ms-powerpoint': 'PPT',
             'application/msword': 'DOC',
             'application/vnd.ms-excel': 'XLS',
@@ -155,12 +167,22 @@
         
     <div class="px-4 py-4 border-b">
         <div class="flex items-center justify-between space-x-1 text-xl">
-            <div class="flex space-x-1">
+            <div class=" space-x-1">
                 <h2>{{ $t('Chats') }}</h2>
-                <span class="text-slate-500">{{ rowCount }}</span>
+                <!-- <span class="text-slate-500">{{ rowCount }}</span> -->
+                <span class="ml-1 text-xs mt-1">
+                    {{ $t('Chats') }} {{ $t('Plan details') }}:
+                    <small class="text-indigo-600 ml-1">
+                        {{ plan.label }}
+                    </small>
+                </span>
             </div>
+
+            <button @click="displaysearchFilter" class="p-1.5 rounded hover:bg-gray-100 transition-colors" title="Search">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-600"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
+            </button>
         </div>
-        <div class="bg-slate-50 rounded-md mt-3 flex items-center py-[2px]">
+        <div v-if="showSearch || params.search" class="bg-slate-50 rounded-md mt-3 flex items-center py-[2px]">
             <div class="pl-3 py-2">
                 <svg class="text-slate-600" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0-14 0m18 11l-6-6"/></svg>
             </div>
@@ -184,7 +206,7 @@
 
     </div>   
     <div class="flex-grow overflow-y-auto h-[65vh]" ref="scrollContainer">
-        <Link :href="'/chats/' + contact.uuid + '?page=' + props.rows.meta.current_page" class="block border-b group-hover:pr-0" v-for="(contact, index) in rows.data" :key="index">
+        <Link :href="'/chats/' + contact.uuid + '?page=' + props.rows.meta.current_page" class="block border-b group-hover:pr-0" v-for="(contact, index) in rows.data" :key="contact.uuid">
             <div class="flex space-x-2 hover:bg-gray-50 cursor-pointer py-3 px-4">
                 <div class="w-[15%]">
                     <img v-if="contact.avatar" class="rounded-full w-10 h-10" :src="contact.avatar">
@@ -209,7 +231,7 @@
                     <div v-if="contact.last_chat.deleted_at === null" class="flex justify-between">
                         <p v-if="contentType(contact.last_chat.metadata) ==='text'" class="text-slate-500 text-xs truncate self-end"> {{ content(contact.last_chat.metadata).text.body }}</p>
                         <p v-if="contentType(contact.last_chat.metadata) ==='button'" class="text-slate-500 text-xs truncate self-end"> {{ content(contact.last_chat.metadata).button.text }}</p>
-                        <p v-if="contentType(contact.last_chat.metadata) ==='interactive'" class="text-slate-500 text-xs truncate self-end"> {{ content(contact.last_chat.metadata).interactive.button_reply.title }}</p>
+                        <p v-if="contentType(contact.last_chat.metadata) ==='interactive'" class="text-slate-500 text-xs truncate self-end"> {{ content(contact?.last_chat?.metadata).interactive?.button_reply?.title || content(contact?.last_chat?.metadata).interactive?.list_reply?.title }}</p>
                         <div v-if="contentType(contact.last_chat.metadata) ==='image'" class="text-slate-500 text-xs truncate self-end flex items-center" >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.9 13.98l2.1 2.53l3.1-3.99c.2-.26.6-.26.8.01l3.51 4.68a.5.5 0 0 1-.4.8H6.02c-.42 0-.65-.48-.39-.81L8.12 14c.19-.26.57-.27.78-.02z"/></svg>
                             <span class="ml-2">{{ $t('Photo') }}</span>
@@ -217,7 +239,7 @@
 
                         <div v-if="contentType(contact.last_chat.metadata) ==='document'" class="text-slate-500 text-xs truncate self-end flex items-center" >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M14.25 2.5a.25.25 0 0 0-.25-.25H7A2.75 2.75 0 0 0 4.25 5v14A2.75 2.75 0 0 0 7 21.75h10A2.75 2.75 0 0 0 19.75 19V9.147a.25.25 0 0 0-.25-.25H15a.75.75 0 0 1-.75-.75V2.5Zm.75 9.75a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1 0-1.5h6Zm0 4a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1 0-1.5h6Z" clip-rule="evenodd"/><path fill="currentColor" d="M15.75 2.824c0-.184.193-.301.336-.186c.121.098.23.212.323.342l3.013 4.197c.068.096-.006.22-.124.22H16a.25.25 0 0 1-.25-.25V2.824Z"/></svg>
-                            <span class="ml-2">{{ getExtension(contact.last_chat.media.type) }} {{ $t('File') }}</span>
+                            <span class="ml-2">{{ getExtension(contact?.last_chat?.media.type) }} {{ $t('File') }}</span>
                         </div>
 
                         
@@ -240,7 +262,7 @@
                         <div v-if="contentType(contact.last_chat.metadata) ==='contacts'" class="text-slate-500 text-xs truncate self-end flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="currentColor" d="M3 14s-1 0-1-1s1-4 6-4s6 3 6 4s-1 1-1 1H3Zm5-6a3 3 0 1 0 0-6a3 3 0 0 0 0 6Z"/></svg>
                             <span class="ml-2">
-                                {{ getContactDisplayName(contact.last_chat.metadata) }}
+                                {{ getContactDisplayName(contact?.last_chat?.metadata) }}
                             </span>
                         </div>
                     
@@ -249,8 +271,33 @@
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="currentColor" d="M9.156 14.544C10.899 13.01 14 9.876 14 7A6 6 0 0 0 2 7c0 2.876 3.1 6.01 4.844 7.544a1.736 1.736 0 0 0 2.312 0ZM6 7a2 2 0 1 1 4 0a2 2 0 0 1-4 0Z"/></svg>
                             <span class="ml-2">{{ $t('Location') }}</span>
                         </div>
+                        <span
+                          v-if="contact.ticket_status"
+                          :class="[
+                            'text-white rounded-md py-[1px] px-[8px] min-w-10 text-[10px] flex items-center justify-center',
+                            contact.ticket_status === 'open' ? 'bg-green-600' : 'bg-red-600'
+                          ]"
+                        >
+                          {{ contact.ticket_status }}
+                        </span>
 
-                        </div>
+                        <!-- <span v-if="contact.unread_messages > 0" class="bg-green-600 text-white rounded-md py-[1px] px-[8px] min-w-10 text-[10px] flex items-center justify-center">{{ contact.unread_messages }}</span>-->
+                    </div>
+                    <div v-if="contact.tags" class="flex justify-between">
+                        <!-- <span class="text-white rounded-md py-[1px] px-[8px] min-w-10 text-[10px] flex items-center justify-center bg-green-600">{{ contact.tags?.tag?.name }}</span> -->
+
+                        <span class="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full"
+                              :style="{ backgroundColor: contact.tags?.tag?.color + '20', color: contact.tags?.tag?.color }">
+
+                            <span
+                                class="w-2 h-2 rounded-full"
+                                :style="{ backgroundColor: contact.tags?.tag?.color }"
+                            ></span>
+
+                            {{ contact.tags?.tag?.name }}
+                        </span>
+
+                    </div>
                 </div>
             </div>
         </Link>

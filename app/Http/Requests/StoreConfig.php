@@ -39,6 +39,13 @@ class StoreConfig extends FormRequest
             $rules['time_format'] = 'required';
         }
 
+        if ($this->type == 'message_rate') {
+            $rules['marketing'] = 'required';
+            $rules['utility'] = 'required';
+            $rules['authentication'] = 'required';
+            $rules['service'] = 'nullable';
+        }
+
         if ($this->type == 'broadcast') {
             $rules['broadcast_driver'] = 'required';
             $rules['pusher_app_key'] = 'required';

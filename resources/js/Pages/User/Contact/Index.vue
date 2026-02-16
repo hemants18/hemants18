@@ -4,18 +4,24 @@
             <div class="md:w-[30%] flex-col h-full bg-white border-r border-l md:flex" :class="$page.url === '/contacts/add' || contact ? 'hidden' : ''">
                 <div class="px-4 pt-4">
                     <div class="flex justify-between mt-2">
-                        <div class="flex space-x-1 text-xl">
+                        <div class=" space-x-1 text-xl">
                             <h2>{{ $t('Contacts') }}</h2>
-                            <span class="text-slate-500">{{ props.rowCount }}</span>
+                            <span class="ml-1 text-xs mt-1">
+                            {{ $t('Contacts') }} {{ $t('Plan details') }}:
+                            <small class="text-indigo-600 ml-1">
+                                {{ plan.label }}
+                            </small>
+                        </span>
+                            <!-- <span class="text-slate-500">{{ props.rowCount }}</span> -->
                         </div>
                         <div class="flex space-x-2 items-center">
-                            <Link href="/contacts/add" title="Add Contact">
+                            <Link href="/contacts/add" v-if="plan.isUnlimited || plan.remaining > 0" title="Add Contact">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"><g fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"><path d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12Zm10-8a8 8 0 1 0 0 16a8 8 0 0 0 0-16Z"/><path d="M13 7a1 1 0 1 0-2 0v4H7a1 1 0 1 0 0 2h4v4a1 1 0 1 0 2 0v-4h4a1 1 0 1 0 0-2h-4V7Z"/></g></svg>
                             </Link>
                         </div>
                     </div>
                 </div>
-                <ContactTable :rows="props.rows" :filters="props.filters" :type="'contact'" @callback="handleContact"/>
+                <ContactTable :plan="plan" :rows="props.rows" :filters="props.filters" :type="'contact'" @callback="handleContact"/>
             </div>
             <div class="md:w-[70%] bg-cover md:h-[100vh] md:overflow-y-hidden">
                 <div v-if="contact">
@@ -23,11 +29,11 @@
                     <ContactForm v-else :contactGroups="props.contactGroups" :contact="props.contact" :fields="props.fields" :locationSettings="locationSettings" />
                 </div>
                 <div v-else>
-                    <div v-if="$page.url === '/contacts/add'">
+                    <div v-if="$page.url === '/contacts/add'" >
                         <ContactForm :contactGroups="props.contactGroups" :contact="props.contact" :fields="props.fields" :locationSettings="locationSettings" />
                     </div>
                     <div v-else>
-                        <div class="md:flex justify-center pt-20 hidden">
+                        <div v-if="plan.isUnlimited || plan.remaining > 0" class="md:flex justify-center pt-20 hidden">
                             <div class="border pt-20 py-10 w-[30em] rounded-xl bg-white">
                                 <h2 class="text-center text-2xl text-slate-500 mb-6">{{ $t('Select contact') }}</h2>
                                 <div class="flex justify-center">
@@ -60,6 +66,10 @@
     import ContactInfo from '@/Components/ContactInfo.vue';
     import ContactTable from '@/Components/Tables/ContactTable.vue';
     import { router } from '@inertiajs/vue3';
+    import { usePlan } from '@/Composables/usePlan';
+    
+    const { getLimit } = usePlan()
+    const plan = getLimit('contacts_limit')
 
     const props = defineProps({ rows: Object, filters: Object, rowCount: Number, contactGroups: Object, contact: Object, editContact: Boolean, fields: Object, locationSettings: String, flash: Object });
     const isOpenModal = ref(false);

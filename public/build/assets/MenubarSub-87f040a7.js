@@ -1,0 +1,1 @@
+import{S as r,s as n}from"./index-9cf65e6c.js";import{C as p,o as u,i,g as m,p as c,a7 as l,a8 as d,u as e}from"./app-586cbc19.js";const C=p({__name:"MenubarSub",props:{defaultOpen:{type:Boolean},open:{type:Boolean}},emits:["update:open"],setup(o,{emit:a}){const s=r(o,a);return(t,B)=>(u(),i(e(n),l(d(e(s))),{default:m(()=>[c(t.$slots,"default")]),_:3},16))}});export{C as default};

@@ -13,6 +13,8 @@
                 <Link href="/contacts/add" class="bg-primary py-2 px-3 rounded-lg text-white">{{ $t('Add contact') }}</Link>
                 <Link href="/campaigns/create" class="bg-primary py-2 px-3 rounded-lg text-white">{{ $t('Create campaign') }}</Link>
                 <Link href="/templates/create" class="bg-primary py-2 px-3 rounded-lg text-white">{{ $t('Create template') }}</Link>
+                <button @click="isOpenModal = true" class="bg-primary rounded-lg text-white p-2 px-3">{{ $t('WhatsApp QR And Link') }}</button>
+                <button @click="isRateOpenModal = true" v-if="getValueByKey('marketing')" class="bg-primary rounded-lg text-white p-2 px-3">{{ $t('WhatsApp Rate Card') }}</button>
             </div>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-4 md:space-y-0">
                 <div class="bg-slate-100 md:bg-white col-span-2 md:col-span-1 rounded-lg p-3">
@@ -150,13 +152,14 @@
                         </div>
                     </div>
 
-                    <div class="flex justify-between bg-slate-100 md:bg-white rounded-lg py-4 px-4">
-                        <div>
-                            <h2>{{ $t('WhatsApp QR (Marketing)') }}</h2>
-                            <div v-if="props.whatsappqrcode" v-html="props.whatsappqrcode"></div>
+                    <!-- <div class="flex justify-between bg-slate-100 md:bg-white rounded-lg py-4 px-4"> -->
+                        <!-- <div> -->
+                            
+                            <!-- <button @click="isOpenModal = true" class="bg-primary rounded-lg text-sm text-white p-2 px-8 text-center">{{ $t('WhatsApp QR And Link') }}</button> -->
+                            <!-- <div v-if="props.whatsappqrcode" v-html="props.whatsappqrcode"></div> -->
                             <!-- <Link v-if="props.whatsappqrcodeurl" :href="props.whatsappqrcodeurl"><span > {{ props.whatsappqrcodeurl }} </span></Link> -->
-                        </div>
-                    </div>
+                        <!-- </div> -->
+                    <!-- </div> -->
 
                     <div v-if="props.auth.user.teams[0].role === 'owner' && displayTeamNotification() === true" class="bg-slate-100 md:bg-white rounded-lg py-4 px-4">
                         <div class="flex justify-between">
@@ -210,13 +213,19 @@
             </div>
         </div>
     </AppLayout>
+
+    <QRModal :data="qrData" v-model:modelValue="isOpenModal"/>
+    <RateModal :data="config" v-model:modelValue="isRateOpenModal"/>
+
 </template>
 <script setup>
     import AppLayout from "./Layout/App.vue";
     import { Link, router } from "@inertiajs/vue3";
-    import { ref, onMounted } from 'vue';
+    import { ref, onMounted,computed } from 'vue';
     import { trans } from 'laravel-vue-i18n';
     import EmbeddedSignupBtn from '@/Components/EmbeddedSignupBtn.vue';
+    import QRModal from '@/Components/QRModal.vue';
+    import RateModal from '@/Components/RateModal.vue';
 
     const props = defineProps({ 
         user: Object, 
@@ -234,12 +243,19 @@
         period: Object, 
         inbound: Object, 
         outbound: Object,
+        config: Object,
         embeddedSignupActive: Number,
         appId: String,
         configId: String,
-        whatsappqrcode : String,
-        whatsappqrcodeurl : String,
     });
+
+    const isOpenModal = ref(false);
+    const isRateOpenModal = ref(false);
+
+    const getValueByKey = (key) => {
+        const found = props.config.find(item => item.key === key);
+        return found ? found.value : '';
+    };
 
     const chartOptions = {
         chart: {
@@ -303,6 +319,18 @@
 
         return teamNotification.value;
     }
+
+    const qrData = computed(() => {
+        if (!props.organization?.metadata) return null
+
+        try {
+            const metadata = JSON.parse(props.organization.metadata)
+            return metadata?.QrCode ?? null
+        } catch (e) {
+            console.error('Invalid metadata JSON', e)
+            return null
+        }
+    })
 
     const dismissNotification = () => {
         router.delete('/dismiss-notification/team', {})

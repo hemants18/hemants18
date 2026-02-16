@@ -92,6 +92,33 @@ class SubscriptionController extends BaseController
         ]);
     }
 
+    public function applyCoupon(CouponRequest $request, $id)
+    {
+        session()->put('applied_coupon', $request->input('coupon'));
+        $organizationId = session()->get('current_organization');
+
+        return Redirect::back()->with('response_data', [
+            'data' => SubscriptionService::calculateSubscriptionBillingDetails($organizationId, $id),
+        ]);
+
+        /*return Redirect::back()->with(
+            'status', [
+                'type' => 'success', 
+                'message' => __('Coupon applied successfully!')
+            ]
+        );*/
+    }
+
+    public function removeCoupon(Request $request, $id)
+    {
+        session()->forget('applied_coupon');
+        $organizationId = session()->get('current_organization');
+
+        return Redirect::back()->with('response_data', [
+            'data' => SubscriptionService::calculateSubscriptionBillingDetails($organizationId, $id),
+        ]);
+    }
+
     public function destroy($id)
     {
         // Your logic for deleting a specific resource

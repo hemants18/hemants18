@@ -74,6 +74,12 @@ class SettingController extends BaseController
         return Inertia::render('Admin/Setting/General', $data);
     }
 
+    public function message_rate(Request $request)
+    {
+        $data['config'] = Setting::get();
+        return Inertia::render('Admin/Setting/message_rate', $data);
+    }
+
     public function email(Request $request){
         $data['config'] = Setting::get();
         return Inertia::render('Admin/Setting/Email', $data);

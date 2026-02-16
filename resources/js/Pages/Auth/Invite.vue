@@ -3,10 +3,10 @@
         <div class="flex justify-center items-center">
             <div v-if="!hasLinkExpired" class="w-[25em]">
                 <div class="flex justify-center mb-5">
-                    <Link href="/">
+                    <a href="/">
                         <img class="max-w-[180px]" v-if="props.companyConfig.logo" :src="'/media/' + props.companyConfig.logo" :alt="props.companyConfig.company_name">
                         <h4 v-else class="text-2xl mb-2">{{ props.companyConfig.company_name }}</h4>
-                    </Link>
+                    </a>
                 </div>
                 <h3 class="text-2xl text-center">
                     <span v-if="props.user">{{ $t('Hi') }} {{ props.user?.first_name }}</span>

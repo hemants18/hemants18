@@ -10,6 +10,12 @@
                             <span>{{ $t('General settings') }}</span>
                         </Link>
                     </li>
+                    <li class="hover:bg-primary hover:text-white rounded-[5px] px-2 truncate" :class="$page.url.startsWith('/admin/settings/message-rate') ? 'bg-primary text-white' : ''">
+                        <Link rel="noopener noreferrer" href="/admin/settings/message-rate" class="flex items-center p-2 space-x-3 rounded-md">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"> <path  d="M18 8.5V8.35417C18 6.50171 16.4983 5 14.6458 5H9.5C7.567 5 6 6.567 6 8.5C6 10.433 7.567 12 9.5 12H14.5C16.433 12 18 13.567 18 15.5C18 17.433 16.433 19 14.5 19H9.42708C7.53436 19 6 17.4656 6 15.5729V15.5M12 3V21"></path> </g></svg>
+                            <span>{{ $t('Message Rates') }}</span>
+                        </Link>
+                    </li>
                     <li class="hover:bg-primary hover:text-white rounded-[5px] px-2 truncate" :class="$page.url.startsWith('/admin/settings/timezone') ? 'bg-primary text-white' : ''">
                         <Link rel="noopener noreferrer" href="/admin/settings/timezone" class="flex items-center p-2 space-x-3 rounded-md">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 13V9m9-3l-2-2m-9-2h4m-2 19a8 8 0 1 1 0-16a8 8 0 0 1 0 16Z"/></svg>

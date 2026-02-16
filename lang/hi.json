@@ -797,7 +797,8 @@
 
 
 
-
+   
+   "Content body generate with AI" : "कंटेंट बॉडी को AI द्वारा जनरेट किया गया है।",
    "template": "टेम्पलेट",
    "match_value": "मिलान मान",
    "use_input_value": "इनपुट मान का उपयोग करें",

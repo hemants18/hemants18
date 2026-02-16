@@ -36,15 +36,20 @@ class ChatLog extends Model {
         $entityType = $this->entity_type;
         $entityId = $this->entity_id;
 
+        $relatedEntity = null;
+
         switch ($entityType) {
             case 'chat':
-                return Chat::with('media', 'user')->find($entityId);
+                $relatedEntity = Chat::with('media', 'user', 'logs')->find($entityId);
+                break;
             case 'ticket':
-                return ChatTicketLog::find($entityId);
+                $relatedEntity = ChatTicketLog::find($entityId);
+                break;
             case 'notes':
-                return ChatNote::find($entityId);
-            default:
-                return null;
+                $relatedEntity = ChatNote::find($entityId);
+                break;
         }
+
+        return $relatedEntity;
     }
 }

@@ -61,7 +61,7 @@ $whatsapp_cloud_api->sendDocument('34676104574', $link_id, $document_name, $docu
 ```php
 <?php
 
-$whatsapp_cloud_api->sendTemplate('34676104574', 'hello_world', 'en_US'); // Language is optional
+$whatsapp_cloud_api->sendTemplate('34676104574', 'hello_world', 'en_US'); // If not specified, Language will be default to en_US and otherwise it will be required.
 ```
 
 You also can build templates with parameters:
@@ -179,6 +179,15 @@ $whatsapp_cloud_api->sendSticker('<destination-phone-number>', $media_id);
 $whatsapp_cloud_api->sendLocation('<destination-phone-number>', $longitude, $latitude, $name, $address);
 ```
 
+### Send a location request message
+
+```php
+<?php
+
+$body = 'Let\'s start with your pickup. You can either manually *enter an address* or *share your current location*.';
+$whatsapp_cloud_api->sendLocationRequest('<destination-phone-number>', $body);
+```
+
 ### Send a contact message
 
 ```php
@@ -220,6 +229,151 @@ $whatsapp_cloud_api->sendList(
     'Thanks for your time',
     $action
 );
+```
+
+### Send a CTA URL message
+
+```php
+<?php
+
+use Netflie\WhatsAppCloudApi\Message\CtaUrl\TitleHeader;
+
+$header = new TitleHeader('Booking');
+
+$whatsapp_cloud_api->sendCtaUrl(
+    '<destination-phone-number>',
+    'See Dates',
+    'https://www.example.com',
+    $header,
+    'Tap the button below to see available dates.',
+    'Dates subject to change.',
+);
+```
+
+### Send Catalog Message
+
+```php
+<?php
+
+$body = 'Hello! Thanks for your interest. Ordering is easy. Just visit our catalog and add items you\'d like to purchase.';
+$footer = 'Best grocery deals on WhatsApp!';
+$sku_thumbnail = '<product-sku-id>'; // product sku id to use as header thumbnail 
+
+$whatsapp_cloud_api->sendCatalog(
+    '<destination-phone-number>',
+    $body,
+    $footer, // optional
+    $sku_thumbnail // optional
+);
+```
+
+### Send a button reply message
+
+```php
+<?php
+
+use Netflie\WhatsAppCloudApi\WhatsAppCloudApi;
+use Netflie\WhatsAppCloudApi\Message\ButtonReply\Button;
+use Netflie\WhatsAppCloudApi\Message\ButtonReply\ButtonAction;
+
+$whatsapp_cloud_api = new WhatsAppCloudApi([
+  'from_phone_number_id' => 'your-configured-from-phone-number-id',
+  'access_token' => 'your-facebook-whatsapp-application-token' 
+]);
+
+$rows = [
+    new Button('button-1', 'Yes'),
+    new Button('button-2', 'No'),
+    new Button('button-3', 'Not Now'),
+];
+$action = new ButtonAction($rows);
+
+$whatsapp_cloud_api->sendButton(
+    '<destination-phone-number>',
+    'Would you like to rate us on Trustpilot?',
+    $action,
+    'RATE US', // Optional: Specify a header (type "text")
+    'Please choose an option' // Optional: Specify a footer 
+);
+```
+
+### Send Multi Product Message
+```php
+<?php
+
+use Netflie\WhatsAppCloudApi\WhatsAppCloudApi;
+use Netflie\WhatsAppCloudApi\Message\MultiProduct\Row;
+use Netflie\WhatsAppCloudApi\Message\MultiProduct\Section;
+use Netflie\WhatsAppCloudApi\Message\MultiProduct\Action;
+
+$rows_section_1 = [
+    new Row('<product-sku-id>'),
+    new Row('<product-sku-id>'),
+    // etc
+];
+
+$rows_section_2 = [
+    new Row('<product-sku-id>'),
+    new Row('<product-sku-id>'),
+    new Row('<product-sku-id>'),
+    // etc
+];
+
+$sections = [
+    new Section('Section 1', $rows_section_1),
+    new Section('Section 2', $rows_section_2),
+];
+
+$action = new Action($sections);
+$catalog_id = '<catalog-id>';
+$header = 'Grocery Collections';
+$body = 'Hello! Thanks for your interest. Here\'s what we can offer you under our grocery collection. Thank you for shopping with us.';
+$footer = 'Subject to T&C';
+
+$whatsapp_cloud_api->sendMultiProduct(
+    '<destination-phone-number>',
+    $catalog_id,
+    $action,
+    $header,
+    $body,
+    $footer // optional
+);
+```
+
+### Replying messages
+
+You can reply a previous sent message:
+
+```php
+<?php
+
+$whatsapp_cloud_api
+    ->replyTo('<whatsapp-message-id-to-reply>')
+    ->sendTextMessage(
+        '34676104574',
+        'Hey there! I\'m using WhatsApp Cloud API. Visit https://www.netflie.es'
+    );
+```
+
+### React to a Message
+
+You can react to a message from your conversations if you know the messageid
+
+```php
+<?php
+
+$whatsapp_cloud_api->sendReaction(
+        '<destination-phone-number>',
+        '<message-id-to-react-to>',
+        '👍', // the emoji
+    );
+
+// Unreact to a message
+$whatsapp_cloud_api->sendReaction(
+        '<destination-phone-number>',
+        '<message-id-to-unreact-to>'
+    );
+
 ```
 
 ## Media messages
@@ -294,7 +448,11 @@ fwrite(STDOUT, print_r($payload, true) . "\n");
 // Instantiate the Webhook super class.
 $webhook = new WebHook();
 
+// Read the first message
 fwrite(STDOUT, print_r($webhook->read(json_decode($payload, true)), true) . "\n");
+
+//Read all messages in case Meta decided to batch them
+fwrite(STDOUT, print_r($webhook->readAll(json_decode($payload, true)), true) . "\n");
 ```
 
 The `Webhook::read` function will return a `Notification` instance. Please, [explore](https://github.com/netflie/whatsapp-cloud-api/tree/main/src/WebHook/Notification "explore") the different notifications availables.
@@ -310,6 +468,25 @@ Marking a message as read will also mark earlier messages in the conversation as
 $whatsapp_cloud_api->markMessageAsRead('<message-id>');
 ```
 
+### Get Business Profile
+```php
+<?php
+
+$whatsapp_cloud_api->businessProfile('<fields>');
+```
+
+### Update Business Profile
+```php
+<?php
+
+$whatsapp_cloud_api->updateBusinessProfile([
+    'about' => '<about_text>',
+    'email' => '<email>'
+]);
+```
+
+Fields list: https://developers.facebook.com/docs/whatsapp/cloud-api/reference/business-profiles
+
 ## Features
 
 - Send Text Messages
@@ -320,11 +497,16 @@ $whatsapp_cloud_api->markMessageAsRead('<message-id>');
 - Send Videos
 - Send Stickers
 - Send Locations
+- Send Location Request
 - Send Contacts
 - Send Lists
+- Send Buttons
+- Send Multi Product Message
 - Upload media resources to WhatsApp servers
 - Download media resources from WhatsApp servers
 - Mark messages as read
+- React to a Message
+- Get/Update Business Profile
 - Webhook verification
 - Webhook notifications
 

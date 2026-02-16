@@ -11,6 +11,7 @@ import ButtonsNode from './vue-flow/nodes/Buttons-node.vue'
 import ListNode from './vue-flow/nodes/List-node.vue'
 import MediaNode from './vue-flow/nodes/Media-node.vue'
 import TextNode from './vue-flow/nodes/Text-node.vue'
+import Contact from './vue-flow/nodes/Contact.vue'
 import { Test_data } from '@/lib/constant'
 
 import type { Dimensions, Elements } from '@vue-flow/core'
@@ -25,6 +26,7 @@ const nodeTypes = {
   buttons: markRaw(ButtonsNode),
   media: markRaw(MediaNode),
   text: markRaw(TextNode),
+  contact: markRaw(Contact),
 }
 
 const { findNode, nodes, edges, viewport, addNodes, addEdges, project, vueFlowRef, onConnect, onNodeDragStop, setNodes, setEdges, setViewport, onViewportChange } =

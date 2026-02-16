@@ -2,6 +2,7 @@
     import { usePage } from "@inertiajs/vue3";
     import { ref, computed } from 'vue';
     import { GoogleMap, Marker } from "vue3-google-map";
+    import Modal from '@/Components/Modal.vue';
     
     const props = defineProps({
         content: Object,
@@ -21,6 +22,7 @@
         const formatMap = {
             'text/plain': 'TXT',
             'application/pdf': 'PDF',
+            'application/powerpoint': 'PPT',
             'application/vnd.ms-powerpoint': 'PPT',
             'application/msword': 'DOC',
             'application/vnd.ms-excel': 'XLS',
@@ -65,6 +67,60 @@
         const found = config.value.find(item => item.key === key);
         return found ? found.value : '';
     };
+
+    const chatStatus = (logs) => {
+        let status = 'sent';
+
+        logs.forEach(log => {
+            const metadata = JSON.parse(log.metadata);
+            const logStatus = metadata.status;
+
+            if (logStatus === 'failed') {
+                status = 'failed';
+                return;
+            } else if (logStatus === 'read') {
+                status = 'read'; // If a log is marked as 'read', it's the highest priority
+            } else if (logStatus === 'delivered' && status !== 'read') {
+                status = 'delivered'; // If 'read' hasn't been found yet, 'delivered' takes precedence over 'sent'
+            }
+            // If only 'sent', the status will remain as 'sent'
+        });
+
+        return status;
+    };
+
+    const isModalOpen = ref(false);
+
+    const getErrors = (logIndex = 0) => {
+        try {
+            if (!props.content?.logs?.[logIndex]?.metadata) {
+                return [];
+            }
+            const metadata = JSON.parse(props.content.logs[logIndex].metadata);
+            return metadata.errors || [];
+        } catch (error) {
+            console.error("Error parsing metadata:", error);
+            return [];
+        }
+    };
+
+    const errors = getErrors();
+    const copiedRef = ref(null);
+
+    const copyItem = async (token) => {
+        copiedRef.value = token;
+
+        const tempInput = document.createElement("textarea");
+        tempInput.value = token;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+
+        setTimeout(() => {
+            copiedRef.value = null;
+        }, 2000);   
+    };
 </script>
 <template>
     <div 
@@ -73,7 +129,7 @@
         <div>
             <!--Text message formatting-->
             <div v-if="JSON.parse(content.metadata).type === 'text'" class="max-w-[300px]">
-                <p class="normal-case whitespace-pre-wrap word-wrap">{{ JSON.parse(content.metadata).text.body }}</p>
+                <p class="normal-case whitespace-pre-wrap word-wrap">{{ JSON.parse(content.metadata).text?.body }}</p>
                 <div v-if="JSON.parse(content.metadata)?.buttons" class="mr-auto text-sm text-[#00a5f4] flex flex-col relative max-w-[25em]">
                     <div v-for="(item, index) in JSON.parse(content.metadata)?.buttons" :key="index" class="flex justify-center items-center space-x-2 rounded-lg bg-white h-10 my-[0.1em]">
                         <span>
@@ -87,6 +143,15 @@
                 </div>
             </div>
 
+            <!--Unsupported Messages-->
+            <div v-if="JSON.parse(content.metadata).type === 'unsupported'" class="max-w-[300px]">
+                <span class="text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3"/></svg>
+                </span>
+                <p class="normal-case whitespace-pre-wrap">{{ $t('Error code') }} : {{ JSON.parse(content.metadata).errors[0].code }}</p>
+                <p class="normal-case whitespace-pre-wrap">{{ JSON.parse(content.metadata).errors[0].error_data.details }}</p>
+            </div>
+
             <!--Reply button formatting-->
             <div v-if="JSON.parse(content.metadata).type === 'button'" class="max-w-[300px]">
                 <p class="normal-case whitespace-pre-wrap">{{ JSON.parse(content.metadata).button.text }}</p>
@@ -94,12 +159,17 @@
 
             <!--Interactive button formatting-->
             <div v-if="JSON.parse(content.metadata).type === 'interactive'" class="max-w-[300px]">
-                <p class="normal-case whitespace-pre-wrap">{{ JSON.parse(content.metadata).interactive.button_reply.title }}</p>
+                <div v-if="JSON.parse(content.metadata).interactive.type == 'button_reply'">
+                    <p class="normal-case whitespace-pre-wrap">{{ JSON.parse(content.metadata).interactive?.button_reply?.title }}</p>
+                </div>
+                <p v-if="JSON.parse(content.metadata).interactive.type == 'list_reply'" class="normal-case whitespace-pre-wrap">{{ JSON.parse(content.metadata).interactive?.list_reply?.title }}</p>
+                <p v-if="JSON.parse(content.metadata).interactive.type == 'list_reply'" class="normal-case whitespace-pre-wrap">{{ JSON.parse(content.metadata).interactive?.list_reply?.description }}</p>
             </div>
 
             <!--Image formatting-->
             <div v-else-if="JSON.parse(content.metadata).type === 'image'">
-                <img v-if="content.media != null" :src="content?.media?.location == 'local' ? '/media/' + content?.media?.path : content?.media?.path" alt="Image" class="mb-2 max-w-[300px]" />
+                <!-- <img v-if="content.media != null" :src="content?.media?.location == 'local' ? '/media/' + content?.media?.path : content?.media?.path" alt="Image" class="mb-2 max-w-[300px]" /> -->
+                <img v-if="content.media != null" :src="'/media/' +content?.media?.path" alt="Image" class="mb-2 max-w-[300px]" />
                 <div v-else class="text-slate-500 flex justify-center items-center space-x-4">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path d="M24 0v24H0V0h24ZM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427c-.002-.01-.009-.017-.017-.018Zm.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093c.012.004.023 0 .029-.008l.004-.014l-.034-.614c-.003-.012-.01-.02-.02-.022Zm-.715.002a.023.023 0 0 0-.027.006l-.006.014l-.034.614c0 .012.007.02.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01l-.184-.092Z"/><path fill="currentColor" d="m13.299 3.148l8.634 14.954a1.5 1.5 0 0 1-1.299 2.25H3.366a1.5 1.5 0 0 1-1.299-2.25l8.634-14.954c.577-1 2.02-1 2.598 0ZM12 4.898L4.232 18.352h15.536L12 4.898ZM12 15a1 1 0 1 1 0 2a1 1 0 0 1 0-2Zm0-7a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V9a1 1 0 0 1 1-1Z"/></g></svg>
                     {{ $t('Content not available') }}
@@ -144,7 +214,9 @@
                                 <span>{{ formatFileSize(content?.media?.size) }}</span>
                             </div>
                         </div>
-                        <a :href="'/media/' + content?.media?.path" :download="content?.media?.name" @click="downloadClicked" class="flex justify-end w-full">
+
+                        <a :href="'/media/' +content?.media?.path" :download="content?.media?.name" target="_blank" @click="downloadClicked" class="flex justify-end w-full">
+                        <!-- <a :href="'/media/' + content?.media?.path" :download="content?.media?.name" @click="downloadClicked" class="flex justify-end w-full"> -->
                             <svg v-if="!downloading" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24"><path fill="currentColor" d="M4.025 11.975q0 2.825 1.725 5t4.4 2.825q.375.1.6.425t.225.725q0 .4-.275.663t-.625.187q-3.5-.7-5.775-3.437t-2.275-6.388q0-3.65 2.288-6.387T10.1 2.15q.35-.075.625.188T11 3q0 .4-.225.725t-.6.425q-2.7.65-4.425 2.825t-1.725 5Zm8.95 1.15l1.85-1.85q.3-.3.725-.3t.725.3q.3.3.288.725t-.313.725L12.675 16.3q-.3.3-.7.3t-.7-.3L7.65 12.65q-.3-.3-.288-.713t.313-.712q.3-.3.713-.3t.712.3l1.875 1.9V8q0-.425.288-.713T11.975 7q.425 0 .713.288t.287.712v5.125Zm3.05 5.75q.375-.225.813-.2t.762.35q.3.3.25.713t-.4.637q-.8.5-1.675.863t-1.8.562q-.4.075-.7-.175t-.3-.675q0-.425.263-.75t.687-.45q.55-.15 1.075-.375t1.025-.5ZM13.975 4.2q-.425-.125-.7-.45T13 3q0-.425.288-.675t.687-.175q.95.2 1.838.562T17.5 3.6q.35.225.375.625t-.25.7q-.3.325-.738.35t-.812-.2q-.5-.275-1.025-.5T13.975 4.2Zm5.75 9.75q.125-.425.463-.7t.762-.275q.425 0 .688.325t.162.725q-.2.95-.575 1.812t-.9 1.663q-.225.35-.625.35t-.675-.275q-.3-.3-.337-.725t.187-.8q.275-.5.488-1.012t.362-1.088Zm-.85-6.075q-.225-.375-.188-.788t.338-.712q.275-.275.675-.263t.625.338q.55.8.925 1.688t.575 1.837q.075.4-.187.7t-.688.3q-.425 0-.762-.287t-.463-.713q-.15-.55-.363-1.075t-.487-1.025Z"/></svg>
                             <svg v-else xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2"><path stroke-dasharray="2 4" stroke-dashoffset="6" d="M12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21"><animate attributeName="stroke-dashoffset" dur="0.6s" repeatCount="indefinite" values="6;0"/></path><path stroke-dasharray="30" stroke-dashoffset="30" d="M12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.1s" dur="0.3s" values="30;0"/></path><path stroke-dasharray="10" stroke-dashoffset="10" d="M12 8v7.5"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.5s" dur="0.2s" values="10;0"/></path><path stroke-dasharray="6" stroke-dashoffset="6" d="M12 15.5l3.5 -3.5M12 15.5l-3.5 -3.5"><animate fill="freeze" attributeName="stroke-dashoffset" begin="0.7s" dur="0.2s" values="6;0"/></path></g></svg>
                         </a>
@@ -177,7 +249,10 @@
 
             <!--Sticker formatting-->
             <div v-else-if="JSON.parse(content.metadata).type === 'sticker'">
-                <img v-if="content.media != null" :src="content?.media?.location == 'local' ? '/media/' + content?.media?.path : content?.media?.path" alt="Image" class="mb-2 max-w-[100px]" />
+                <!-- <img v-if="content.media != null" :src="content?.media?.location == 'local' ? '/media/' + content?.media?.path : content?.media?.path" alt="Image" class="mb-2 max-w-[100px]" /> -->
+
+                <img v-if="content.media != null" :src="'/media/' +content?.media?.path" alt="Image" class="mb-2 max-w-[100px]" />
+
                 <div v-else class="text-slate-500 flex justify-center items-center space-x-4">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none"><path d="M24 0v24H0V0h24ZM12.593 23.258l-.011.002l-.071.035l-.02.004l-.014-.004l-.071-.035c-.01-.004-.019-.001-.024.005l-.004.01l-.017.428l.005.02l.01.013l.104.074l.015.004l.012-.004l.104-.074l.012-.016l.004-.017l-.017-.427c-.002-.01-.009-.017-.017-.018Zm.265-.113l-.013.002l-.185.093l-.01.01l-.003.011l.018.43l.005.012l.008.007l.201.093c.012.004.023 0 .029-.008l.004-.014l-.034-.614c-.003-.012-.01-.02-.02-.022Zm-.715.002a.023.023 0 0 0-.027.006l-.006.014l-.034.614c0 .012.007.02.017.024l.015-.002l.201-.093l.01-.008l.004-.011l.017-.43l-.003-.012l-.01-.01l-.184-.092Z"/><path fill="currentColor" d="m13.299 3.148l8.634 14.954a1.5 1.5 0 0 1-1.299 2.25H3.366a1.5 1.5 0 0 1-1.299-2.25l8.634-14.954c.577-1 2.02-1 2.598 0ZM12 4.898L4.232 18.352h15.536L12 4.898ZM12 15a1 1 0 1 1 0 2a1 1 0 0 1 0-2Zm0-7a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V9a1 1 0 0 1 1-1Z"/></g></svg>
                     {{ $t('Content not available') }}
@@ -199,7 +274,8 @@
             <!--Audio formatting-->
             <div v-else-if="JSON.parse(content.metadata).type === 'audio'">
                 <audio v-if="content.media != null" controls>
-                    <source :src="content?.media?.location == 'local' ? '/media/' + content?.media?.path : content?.media?.path">
+                    <!-- <source :src="content?.media?.location == 'local' ? '/media/' + content?.media?.path : content?.media?.path"> -->
+                    <source :src="'/media/' +content?.media?.path">
                     {{ $t('Your browser does not support the audio element') }}
                 </audio>
                 <div v-else class="text-slate-500 flex justify-center items-center space-x-4">
@@ -211,7 +287,8 @@
             <!--Video formatting-->
             <div v-else-if="JSON.parse(content.metadata).type === 'video'">
                 <video v-if="content.media != null" controls width="300" class="max-h-[350px]">
-                    <source :src="content?.media?.location == 'local' ? '/media/' + content?.media?.path : content?.media?.path" type="video/mp4">
+                    <!-- <source :src="content?.media?.location == 'local' ? '/media/' + content?.media?.path : content?.media?.path" type="video/mp4"> -->
+                        <source :src="'/media/' +content?.media?.path" type="video/mp4">
                     {{ $t('Your browser does not support the video element') }}
                 </video>
                 <div v-else class="text-slate-500 flex justify-center items-center space-x-4">
@@ -233,7 +310,7 @@
             </div>
 
             <!--Timestamp-->
-            <div class="flex items-center justify-between mt-2 space-x-4">
+            <!-- <div class="flex items-center justify-between mt-2 space-x-4">
                 <span v-if="props.type === 'outbound' && content.user" class="text-gray-500 text-xs text-right leading-none">Sent By: {{ content.user?.first_name + ' ' + content.user?.last_name }}</span>
                 <p class="text-gray-500 text-xs text-right leading-none">{{ content.created_at }}</p>
                 <span>
@@ -244,18 +321,29 @@
                         </svg>
                         <svg v-if="content.status === 'delivered'" xmlns="http://www.w3.org/2000/svg" width="15" height="24" viewBox="0 0 24 24" role="img" aria-label="double tick">
                           <title>Double tick</title>
-                          <!-- first (left) tick -->
                           <path d="M2.5 12.5l4 4L11 8" fill="none" stroke="#97A0A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <!-- second (right) tick -->
                           <path d="M8 12.5l4 4L20 5" fill="none" stroke="#97A0A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         <svg v-if="content.status === 'read'" xmlns="http://www.w3.org/2000/svg" width="15" height="24" viewBox="0 0 24 24" role="img" aria-label="double tick green">
                           <title>Double tick (green)</title>
-                          <!-- left tick -->
                           <path d="M2.5 12.5l4 4L11 8" fill="none" stroke="#25D366" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                          <!-- right tick -->
                           <path d="M8 12.5l4 4L20 5" fill="none" stroke="#25D366" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
+                </span>
+            </div> -->
+            <div v-if="props.type === 'outbound' && content.user" class="mt-2 mb--2">
+                <span  class="text-gray-500 text-xs text-right leading-none">Sent By: <u>{{ content.user?.first_name + ' ' + content.user?.last_name }}</u></span>
+            </div>
+            <div class="flex items-center justify-between space-x-4" :class="props.type === 'outbound' && content.user ? '' : 'mt-2'">
+                <p class="text-gray-500 text-xs text-right leading-none">{{ content.created_at }}</p>
+                <span class="relative group cursor-pointer" :class="chatStatus(content.logs) === 'read' ? 'text-blue-500' : 'text-gray-500'">
+                    <!-- Tooltip text -->
+                    <div class="absolute capitalize hidden group-hover:block bg-white text-gray-600 text-xs rounded-sm py-1 px-2 bottom-full mb-1 whitespace-no-wrap">
+                        {{ chatStatus(content.logs) }}
+                    </div>
+                    <svg v-if="chatStatus(content.logs) === 'sent'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m2.75 8.75l3.5 3.5l7-7.5"/></svg>
+                    <svg v-if="chatStatus(content.logs) === 'delivered' || chatStatus(content.logs) === 'read'" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m1.75 9.75l2.5 2.5m3.5-4l2.5-2.5m-4.5 4l2.5 2.5l6-6.5"/></svg>
+                    <svg @click="isModalOpen = true;" v-if="chatStatus(content.logs) === 'failed'" class="text-red-600" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><g fill="currentColor"><path d="M2 2a2 2 0 0 0-2 2v8.01A2 2 0 0 0 2 14h5.5a.5.5 0 0 0 0-1H2a1 1 0 0 1-.966-.741l5.64-3.471L8 9.583l7-4.2V8.5a.5.5 0 0 0 1 0V4a2 2 0 0 0-2-2zm3.708 6.208L1 11.105V5.383zM1 4.217V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v.217l-7 4.2z"/><path d="M12.5 16a3.5 3.5 0 1 0 0-7a3.5 3.5 0 0 0 0 7m.5-5v1.5a.5.5 0 0 1-1 0V11a.5.5 0 0 1 1 0m0 3a.5.5 0 1 1-1 0a.5.5 0 0 1 1 0"/></g></svg>
                 </span>
             </div>
 
@@ -264,6 +352,28 @@
             </div>
         </div>
     </div>
+    <Modal :label="$t('Message status: ') + chatStatus(content.logs)" :isOpen=isModalOpen :closeBtn="true" @close="isModalOpen = false">
+        <div>
+            <div v-if="errors.length" class="bg-red-100 rounded-md p-3 text-sm mt-4">
+                <div v-for="(error, index) in errors" :key="index">
+                    <div class="flex">
+                        <p class="truncate">Chat ID: {{ JSON.parse(content.logs[0].metadata).id }}</p>
+                        <button @click="copyItem(JSON.parse(content.logs[0].metadata).id)" class="text-gray-600 hover:text-black transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 11c0-2.828 0-4.243.879-5.121C7.757 5 9.172 5 12 5h3c2.828 0 4.243 0 5.121.879C21 6.757 21 8.172 21 11v5c0 2.828 0 4.243-.879 5.121C19.243 22 17.828 22 15 22h-3c-2.828 0-4.243 0-5.121-.879C6 20.243 6 18.828 6 16z"/><path d="M6 19a3 3 0 0 1-3-3v-6c0-3.771 0-5.657 1.172-6.828C5.343 2 7.229 2 11 2h4a3 3 0 0 1 3 3"/></g></svg>
+                        </button>
+                    </div>
+                    <p>Error Code: {{ error.code }}</p>
+                    <p>Title: {{ error.title }}</p>
+                    <p>Message: {{ error.message }}</p>
+                    <p>Error Details: {{ error.error_data.details }}</p>
+                </div>
+            </div>
+
+            <div class="mt-4 flex w-full">
+                <button type="button" @click.self="isModalOpen = false;" class="w-full justify-center rounded-md border border-transparent bg-slate-50 px-4 py-2 text-sm text-slate-500 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">{{ $t('Cancel') }}</button>
+            </div>
+        </div>
+    </Modal>
 </template>
 <style>
     .word-wrap {

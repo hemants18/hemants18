@@ -44,7 +44,7 @@
                         </div>
                     </div>
                     <!-- Table Component-->
-                    <CampaignLogTable :rows="props.rows" :filters="props.filters" :uuid="props.campaign.uuid"/>
+                    <CampaignLogTable :rows="props.rows" :filters="props.filters" :uuid="props.campaign.uuid" :template="props.template"/>
                 </div>
                 <div class="md:w-[30%]">
                     <div class="w-full rounded-lg bg-white pt-4 pb-8 border px-4 space-y-1">
@@ -81,5 +81,5 @@
     import WhatsappTemplate from '@/Components/WhatsappTemplate.vue';
     import { Link } from "@inertiajs/vue3";
 
-    const props = defineProps(['campaign', 'rows', 'filters']);
+    const props = defineProps(['campaign', 'rows', 'filters', 'template']);
 </script>

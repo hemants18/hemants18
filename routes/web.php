@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
+use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,8 @@ Route::get('/run-queue', function () {
     Artisan::call('queue:work --once');
     return "Executed one queue cycle.";
 });
+
+Route::post('/ask-ai', [App\Http\Controllers\User\AiController::class, 'ask']);
 
 Route::get('/current-locale', function () {
     return response()->json(['locale' => app()->getLocale()]);
@@ -42,17 +45,29 @@ Route::get('/translations/{locale}', function ($locale) {
     }
 });
 
+Route::middleware('frontend.inertia')->group(function () {
+    // Route::get('/', fn () => Inertia::render('Frontend/Pages/Index'));
+    // Route::get('/pricing', fn () => Inertia::render('Frontend/Pricing'));
+    //Frontend Routes
+    Route::match(['get', 'post'], '/', [App\Http\Controllers\FrontendController::class, 'index']);
+    Route::match(['get', 'post'], '/about-us', [App\Http\Controllers\FrontendController::class, 'about']);
+    Route::match(['get', 'post'], '/contact-us', [App\Http\Controllers\FrontendController::class, 'contact']);
+    // Route::match(['get', 'post'], '/terms-of-service', [App\Http\Controllers\FrontendController::class, 'contact']);
+    Route::match(['get', 'post'], '/pages/{slug}', [App\Http\Controllers\FrontendController::class, 'pages']);
+    Route::match(['get', 'post'], '/privacy-policy', [App\Http\Controllers\FrontendController::class, 'privacy']);
+    Route::match(['get', 'post'], '/refund-policy', [App\Http\Controllers\FrontendController::class, 'refund']);
+    Route::match(['get', 'post'], '/pricing', [App\Http\Controllers\FrontendController::class, 'pricing']);
+    Route::match(['get', 'post'], '/privacy', [App\Http\Controllers\FrontendController::class, 'privacy']);
+    Route::match(['get', 'post'], '/terms-of-service', [App\Http\Controllers\FrontendController::class, 'termsOfService']);
+    Route::match(['get', 'post'], '/process-campaign', [App\Http\Controllers\FrontendController::class, 'buildTemplateChatMessage']);
+    Route::get('/language/{locale}', [App\Http\Controllers\FrontendController::class, 'changeLanguage']);
+});
+
 Route::get('/whatsapp/oauth/callback', function () {
     return response()->json(['status' => 'ok']);
 });
-//Frontend Routes
-Route::match(['get', 'post'], '/', [App\Http\Controllers\FrontendController::class, 'index']);
-Route::match(['get', 'post'], '/pages/{slug}', [App\Http\Controllers\FrontendController::class, 'pages']);
-Route::match(['get', 'post'], '/privacy', [App\Http\Controllers\FrontendController::class, 'privacy']);
-Route::match(['get', 'post'], '/terms-of-service', [App\Http\Controllers\FrontendController::class, 'termsOfService']);
-Route::match(['get', 'post'], '/process-campaign', [App\Http\Controllers\FrontendController::class, 'buildTemplateChatMessage']);
-Route::get('/language/{locale}', [App\Http\Controllers\FrontendController::class, 'changeLanguage']);
 
+Route::match(['get', 'post'], '/client-demo', [App\Http\Controllers\FrontendController::class, 'clientDemo']);
 //File Route
 Route::get('media/{filename}', [App\Http\Controllers\FileController::class, 'show'])->where('filename', '.*');
 
@@ -121,6 +136,8 @@ Route::middleware(['auth:user'])->group(function () {
                 Route::match(['get', 'post'], '/billing', [App\Http\Controllers\User\BillingController::class, 'index'])->name('user.billing.index');
                 Route::post('/pay', [App\Http\Controllers\User\BillingController::class, 'pay'])->name('user.billing.pay');
                 Route::resource('subscription', App\Http\Controllers\User\SubscriptionController::class);
+                Route::post('/subscription/coupon/apply/{id}', [App\Http\Controllers\User\SubscriptionController::class, 'applyCoupon']);
+                Route::get('/subscription/coupon/remove/{id}', [App\Http\Controllers\User\SubscriptionController::class, 'removeCoupon']);
             });
 
             Route::group(['middleware' => 'check.subscription'], function () {
@@ -156,6 +173,7 @@ Route::middleware(['auth:user'])->group(function () {
 
                 Route::get('/campaigns/{uuid?}', [App\Http\Controllers\User\CampaignController::class, 'index'])->name('campaigns');
                 Route::post('/campaigns', [App\Http\Controllers\User\CampaignController::class, 'store']);
+                Route::post('/campaigns/reschedule', [App\Http\Controllers\User\CampaignController::class, 'reSchedule']);
                 Route::get('/campaigns/export/{uuid?}', [App\Http\Controllers\User\CampaignController::class, 'export']);
                 Route::delete('/campaigns/{uuid?}', [App\Http\Controllers\User\CampaignController::class, 'delete']);
 
@@ -217,6 +235,8 @@ Route::middleware(['auth:user'])->group(function () {
                     Route::match(['get', 'post'], '/settings/tickets', [App\Http\Controllers\User\SettingController::class, 'tickets']);
                     Route::match(['get', 'post'], '/settings/automation', [App\Http\Controllers\User\SettingController::class, 'automation']);
                     Route::resource('contact-fields', App\Http\Controllers\User\ContactFieldController::class);
+                    Route::resource('/settings/tags', App\Http\Controllers\User\TagController::class);
+                    Route::post('/assign/tags', [App\Http\Controllers\User\TagController::class,'assign']);
 
                     Route::get('/team', [App\Http\Controllers\User\TeamController::class, 'index'])->name('team');
                     Route::post('/team/invite', [App\Http\Controllers\User\TeamController::class, 'invite'])->name('team.store');
@@ -265,6 +285,9 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
     Route::post('/addons/setup/flow-builder', [Modules\FlowBuilder\Controllers\SetupController::class, 'store']);
     Route::put('/addons/setup/flow-builder', [Modules\FlowBuilder\Controllers\SetupController::class, 'update']);
 
+    Route::post('/addons/setup/ai-assistant', [Modules\IntelliReply\Controllers\SetupController::class, 'store']);
+    Route::put('/addons/setup/ai-assistant', [Modules\IntelliReply\Controllers\SetupController::class, 'update']);
+
     Route::resource('payment-gateways', App\Http\Controllers\Admin\PaymentGatewayController::class)->only(['index', 'show', 'update']);
     Route::get('/languages/{language}/export', [App\Http\Controllers\Admin\LanguageController::class, 'export']);
     Route::post('/languages/{language}/import', [App\Http\Controllers\Admin\LanguageController::class, 'import']);
@@ -288,6 +311,7 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
 
     Route::get('/settings', [App\Http\Controllers\Admin\SettingController::class, 'index']);
     Route::match(['get', 'post'], '/settings/general', [App\Http\Controllers\Admin\SettingController::class, 'general']);
+    Route::match(['get', 'post'], '/settings/message-rate', [App\Http\Controllers\Admin\SettingController::class, 'message_rate']);
     Route::put('/settings', [App\Http\Controllers\Admin\SettingController::class, 'update']);
     Route::get('/settings/smtp', [App\Http\Controllers\Admin\SettingController::class, 'email']);
     Route::get('/settings/broadcast-drivers', [App\Http\Controllers\Admin\SettingController::class, 'broadcast_driver']);

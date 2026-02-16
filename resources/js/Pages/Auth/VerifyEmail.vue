@@ -3,10 +3,10 @@
         <div class="flex justify-center">
             <div class="w-[20em] mt-40">
                 <div class="flex justify-center mb-5">
-                    <Link href="/">
+                    <a href="/">
                         <img class="max-w-[180px]" v-if="props.companyConfig.logo" :src="'/media/' + props.companyConfig.logo" :alt="props.companyConfig.company_name">
                         <h4 v-else class="text-2xl mb-2">{{ props.companyConfig.company_name }}</h4>
-                    </Link>
+                    </a>
                 </div>
                 <h1 class="text-2xl text-center">{{ $t('Verify your email') }}</h1>
                 <div class="py-2 text-center bg-slate-50 rounded-md my-4 px-4">{{ $t('We\'ve sent you a verification link to your email, click on it to continue') }}</div>

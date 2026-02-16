@@ -23,6 +23,7 @@
       multiple: Boolean,
       required: Boolean,
       error: String,
+      disabled: Boolean
     })
 
     const emit = defineEmits(['update:modelValue'])
@@ -40,7 +41,18 @@
 <template>
     <div :class="className">
         <label for="name" class="block text-sm leading-6 text-gray-900">{{ name }}</label>
-        <div class="">
+        <div v-if="disabled == true">
+            <input
+            class="block w-full rounded-md border-0 py-1.5 px-4 text-gray-900 shadow-sm outline-none ring-1 ring-inset placeholder:text-gray-400 sm:text-sm sm:leading-6"
+            :class="error ? 'ring-[#b91c1c]' : 'ring-gray-300'"
+            :type="'text'"
+            :value="label"
+            :step="'any'"
+            :placeholder="placeholder"
+            :disabled="true"
+            />
+        </div>
+        <div v-else>
             <Listbox 
                 :multiple="props.multiple"
                 @update:modelValue="value => emit('update:modelValue', value)"

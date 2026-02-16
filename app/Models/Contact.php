@@ -79,6 +79,11 @@ class Contact extends Model {
         return $this->hasMany(Chat::class, 'contact_id')->orderBy('created_at', 'asc');
     }
 
+    public function tags()
+    {
+        return $this->hasOne(ContactTag::class,'contact_id','uuid')->orderBy('assign_datetime','desc');
+    }
+
     public function lastChat()
     {
         return $this->hasOne(Chat::class, 'contact_id')->with('media')->latest();
@@ -102,7 +107,7 @@ class Contact extends Model {
         $query = $this->has('chats')
             ->where('contacts.organization_id', $organizationId)
             ->where('contacts.deleted_at', null)
-            ->with(['lastChat', 'lastInboundChat'])
+            ->with(['lastChat', 'lastInboundChat','tags.tag'])
             // ->withCount(['unreadMessages as unread_count'])
             ->select('contacts.*',DB::raw('(select count(id) FROM chats where contacts.id = chats.contact_id and chats.type = "inbound" and chats.is_read = "0" and deleted_at is null) as unread_count'))
             ->leftJoin('chats as latest_chat', function ($join) {
@@ -129,6 +134,8 @@ class Contact extends Model {
                     ->orWhere('chat_tickets.assigned_to', auth()->user()->id);
                 });
             }
+
+            $query->addSelect('chat_tickets.status as ticket_status');
         }
 
         // Include the search term in the query if provided

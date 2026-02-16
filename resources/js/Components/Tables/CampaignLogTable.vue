@@ -3,6 +3,7 @@
     import { ref, watch, computed } from 'vue';
     import debounce from 'lodash/debounce';
     import { router } from '@inertiajs/vue3';
+    import FormSelect from '@/Components/FormSelect.vue';
     import Modal from '@/Components/Modal.vue';
     import Table from '@/Components/Table.vue';
     import TableHeader from '@/Components/TableHeader.vue';
@@ -11,6 +12,7 @@
     import TableBody from '@/Components/TableBody.vue';
     import TableBodyRow from '@/Components/TableBodyRow.vue';
     import TableBodyRowItem from '@/Components/TableBodyRowItem.vue';
+     import { useForm } from "@inertiajs/vue3";
 
     const props = defineProps({
         rows: {
@@ -33,7 +35,15 @@
     const messageStatus = ref(null);
     const isOpenModal = ref(false);
     const isSearching = ref(false);
+    const isLoading = ref(false);
     const emit = defineEmits(['delete']);
+
+    const form = useForm({
+        contact_ids: [],
+        uuid: props.uuid,
+        schedule_at: null,
+        mode: 'retry',
+    })
 
     const clearSearch = () => {
         params.value.search = null;
@@ -111,8 +121,25 @@
 
     const closeRetryModal = () => {
       isRetryModalOpen.value = false;
+      rescheduleAt.value = nul
     };
 
+    const submitRetry = () => { 
+        isLoading.value = true;
+        form.contact_ids = selected.value;
+        console.log(form);
+        form.post('/campaigns/reschedule', { 
+            onFinish: () => { 
+                isLoading.value = false; 
+            } 
+        }); 
+    }
+
+    const minDateTime = computed(() => {
+      const now = new Date()
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+      return now.toISOString().slice(0, 16)
+    })
 </script>
 <template>
     <div class="flex items-center justify-between mb-6">
@@ -146,7 +173,7 @@
           <button
             type="button"
             @click="selectByStatus('read')"
-            class="px-3 py-1 text-xs bg-blue-600 text-white rounded"
+            class="px-3 py-1 text-xs bg-green-600 text-white rounded"
           >
             {{ $t('Read') }}
           </button>
@@ -233,35 +260,64 @@
       <div class="space-y-4">
 
         <h2 class="text-lg font-semibold text-slate-700">
-          {{ $t('Retry Campaign') }}
+          {{ $t('Retry / Reschedule Campaign') }}
         </h2>
 
         <p class="text-sm text-slate-600">
-          {{ $t('Are you sure you want to retry') }}
+          {{ $t('You have selected') }}
           <strong class="text-primary">{{ selected.length }}</strong>
-          {{ $t('selected messages?') }}
+          {{ $t('contacts') }}
         </p>
+
+        <!-- Schedule datetime -->
+        <div>
+          <label class="text-sm text-slate-600 block mb-1">
+            {{ $t('Schedule Date & Time (optional)') }}
+          </label>
+
+
+          <input
+            type="datetime-local"
+            v-model="form.schedule_at"
+            :min="minDateTime"
+            class="w-full border rounded px-3 py-2 text-sm"
+          />
+
+          <p class="text-xs text-slate-500 mt-1">
+            {{ $t('Leave empty to retry immediately') }}
+          </p>
+        </div>
 
         <div class="flex justify-end gap-3 pt-4">
           <button
             type="button"
             @click="closeRetryModal"
-            class="px-4 py-2 text-sm rounded bg-gray-100 text-gray-700 hover:bg-gray-200"
+            class="px-4 py-2 text-sm rounded bg-gray-100 text-gray-700"
           >
             {{ $t('Cancel') }}
           </button>
 
-          <button
+          <!-- <button
             type="button"
-            @click="() => { retryCampaign(); closeRetryModal(); }"
-            class="px-4 py-2 text-sm rounded bg-primary text-white hover:bg-primary" >
-            {{ $t('Yes, Retry') }}
-          </button>
+            @click="submitRetry"
+            :disabled="selected.length === 0"
+            class="px-4 py-2 text-sm rounded bg-primary text-white disabled:opacity-50"
+          >
+            {{ rescheduleAt ? $t('Reschedule') : $t('Retry Now') }}
+          </button> -->
+
+          <button
+              @click="submitRetry"
+              :disabled="isLoading"
+              class="px-4 py-2 text-sm rounded bg-primary text-white disabled:opacity-50"
+            >
+              {{ isLoading ? 'Processing...' : (form.schedule_at ? 'Reschedule' : 'Retry Now') }}
+            </button>
+
+
         </div>
 
       </div>
     </Modal>
-
-
 </template>
   

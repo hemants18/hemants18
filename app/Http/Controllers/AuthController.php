@@ -42,6 +42,7 @@ class AuthController extends BaseController
     {
         $this->userService = new UserService($role);
         $this->role = $role;
+        Inertia::setRootView('app');
     }
 
     public function showLoginForm(){
@@ -142,6 +143,7 @@ class AuthController extends BaseController
             return SocialLoginService::makeGoogleDriver()->redirect();
         } else if($type === 'facebook'){
             //return Socialite::driver('facebook')->redirect();
+            // dd(SocialLoginService::makeFacebookDriver()->redirect()->getTargetUrl());die();
             return SocialLoginService::makeFacebookDriver()->redirect();
         }
     }
@@ -355,10 +357,12 @@ class AuthController extends BaseController
         return $organization;
     }
 
-    public function showRegistrationForm()
+    public function showRegistrationForm(Request $request)
     {
         $keys = ['logo', 'company_name', 'address', 'email', 'phone', 'socials', 'trial_period', 'allow_facebook_login', 'allow_google_login'];
         $data['companyConfig'] = Setting::whereIn('key', $keys)->pluck('value', 'key')->toArray();
+
+        $data['plan_uuid'] = $request->plan;
 
         return Inertia::render('Auth/Register', $data);
     }

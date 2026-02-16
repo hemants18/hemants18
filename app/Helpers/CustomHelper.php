@@ -50,8 +50,6 @@ class CustomHelper {
             ->where('organization_id', $orgId)
             ->first();
 
-        \Log::info('organization_id'. $orgId);
-        \Log::info('subscription row'. json_encode($subscription));
         if($addon){
 
             if($subscription->status === 'trial' && $subscription->valid_until > now()){

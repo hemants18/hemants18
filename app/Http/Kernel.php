@@ -74,5 +74,6 @@ class Kernel extends HttpKernel
         'auth.bearer' => \App\Http\Middleware\AuthenticateBearerToken::class,
         'setOrganization' => \App\Http\Middleware\SetOrganizationFromSession::class,
         'redirectIfAuthenticated' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'frontend.inertia' => \App\Http\Middleware\HandleFrontendInertiaRequests::class,
     ];
 }

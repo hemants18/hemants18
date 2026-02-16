@@ -13,7 +13,7 @@
 
 
     const imageViewUrl = ref(props.imageUrl);
-    console.log(imageViewUrl);
+    // console.log(imageViewUrl);
     const emit = defineEmits(['update:modelValue']);
 
     const updateValue = (event) => {

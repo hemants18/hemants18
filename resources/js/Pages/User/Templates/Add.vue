@@ -172,8 +172,14 @@
                             </div>
 
                             <h2 class="text-slate-600">{{ $t('Body') }} <span class="text-xs">({{ $t('Required') }})</span></h2>
+                            
                             <span class="text-slate-600 text-xs">{{ $t('Enter the text for your message in the language that you\'ve selected') }}</span>
+
+
                             <div class="mb-8">
+                                <button v-if="props.aimodule === true" @click="isAIModalOpen = true" class="text-primary text-sm">
+                                    ✨ {{$t('Content body generate with AI')}}
+                                </button>
                                 <div>
                                     <BodyTextArea v-model="form.body.text" @updateExamples="updateBodyExamples"/>
                                 </div>
@@ -422,6 +428,48 @@
             </div>
         </Modal>
 
+        <Modal :label="''" :isOpen=isAIModalOpen :showHeader="false">
+            <div class="mt-5 grid grid-cols-1 gap-x-6 gap-y-4">
+                <div class="text-center">
+                    <div class="bg-white w-full max-w-lg rounded-xl p-6">
+      
+                      <h2 class="text-lg font-semibold mb-4">
+                        ✨ {{ $t('Content body generate with AI') }}
+                      </h2>
+
+                      <!-- Prompt Input -->
+                      <textarea
+                        v-model="prompt"
+                        rows="4"
+                        class="w-full border rounded-md p-2 mb-4"
+                        placeholder="Enter your prompt..."
+                      ></textarea>
+
+                      <!-- Generate Button -->
+                      <button
+                        @click="generateWithAI"
+                        class="bg-primary text-white px-4 py-2 rounded-md"
+                      >
+                        {{ loading ? 'Generating...' : 'Generate' }}
+                      </button>
+
+                      <!-- AI Response -->
+                      <div v-if="aiResponse" class="mt-4 p-3 bg-red-100 rounded-md">
+                        {{ aiResponse }}
+                      </div>
+
+                      <!-- Footer -->
+
+
+                      <div class="flex justify-end mt-4">
+                            <button type="button" @click="closeAIModal" class="mt-4 inline-flex justify-center rounded-md border border-transparent bg-slate-50 px-4 py-2 text-sm text-slate-500 hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 mr-4">Close</button>
+                      </div>
+
+                    </div>
+                </div>
+            </div>
+        </Modal>
+
         
     </AppLayout>
 </template>
@@ -445,7 +493,7 @@
     import 'vue3-toastify/dist/index.css';
     import { router } from '@inertiajs/vue3';
 
-    const props = defineProps(['languages', 'settings']);
+    const props = defineProps(['languages', 'settings', 'aimodule']);
     const headerCharacterLimit = ref('60');
     const headerCharacterCount = ref('0');
     const bodyCharacterLimit = ref('1098');
@@ -469,7 +517,7 @@
             'example' : [],
         },
         'body' : {
-            'text' : null,
+            'text' : '',
             'variables' : null,
             'example' : []
         },
@@ -493,6 +541,72 @@
             ]
         }
     });
+
+    //for ai
+
+    const isAIModalOpen = ref(false)
+    const prompt = ref('')
+    const aiResponse = ref('')
+    const loading = ref(false)
+
+    const generateWithAI = async () => {
+      if (!prompt.value) return
+
+      try {
+        loading.value = true
+
+        const res = await axios.post('/ask-ai', {
+          prompt: prompt.value,
+          template_name: form.value.name,
+          category: form.value.category,
+          language: form.value.language
+        })
+
+        if (res.data?.success === false) {
+          aiResponse.value = res.data?.message + ' ' + res.data?.error
+          return
+        }
+
+        // If backend already returns object
+        const aiTemplateData =
+          typeof res.data.data === 'string'
+            ? JSON.parse(res.data.data)
+            : res.data.data
+
+        if (!aiTemplateData) return
+
+        form.value = {
+          ...form.value,
+          name: form.value.name || aiTemplateData.template_name,
+          category: aiTemplateData.category,
+          language: aiTemplateData.language,
+        }
+
+        const aiText = aiTemplateData?.components?.[0]?.text || ''
+
+        form.value = {
+          ...form.value,
+          body: {
+            ...form.value.body,
+            text: aiText
+          }
+        }
+
+        aiResponse.value =
+          typeof res.data.data === 'string'
+            ? res.data.data
+            : JSON.stringify(res.data.data, null, 2)
+        isAIModalOpen.value = false;
+        prompt.value = null;
+        aiResponse.value = null;
+      } catch (error) {
+        aiResponse.value = 'Something went wrong while generating template.'
+        console.error(error)
+      } finally {
+        loading.value = false
+      }
+    }
+    //end ai
 
     const config = ref(props.settings.metadata);
     const settings = ref(config.value ? JSON.parse(config.value) : null);
@@ -867,6 +981,15 @@
 
         setTimeout(() => {
             error.value = null;
+        }, 500);
+    }
+
+    const closeAIModal = () => {
+        isAIModalOpen.value = false;
+       
+        setTimeout(() => {
+             prompt.value = null;
+            aiResponse.value = null; 
         }, 500);
     }
 

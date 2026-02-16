@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use DB;
 use Socialite;
+use Laravel\Socialite\Two\FacebookProvider;
 
 class SocialLoginService
 {
@@ -23,7 +24,6 @@ class SocialLoginService
             'redirect' => url('google/callback'),
         ];
 
-        print_r($config);die;
 
         return Socialite::buildProvider('\Laravel\Socialite\Two\GoogleProvider', $config);
     }
@@ -41,6 +41,10 @@ class SocialLoginService
             'redirect' => url('facebook/callback'),
         ];
 
-        return Socialite::buildProvider('\Laravel\Socialite\Two\FacebookProvider', $config);
+        return Socialite::buildProvider('\Laravel\Socialite\Two\FacebookProvider', $config)->scopes([
+            'email',
+            'public_profile'
+        ]);
+        // return Socialite::buildProvider('\Laravel\Socialite\Two\FacebookProvider', $config);
     }
 }

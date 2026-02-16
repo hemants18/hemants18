@@ -151,13 +151,39 @@
                                     <h3>{{ debit.total }}</h3>
                                 </div>
                             </div>
+                            <div v-if="parseFloat(amountDue) > 0" class="bg-slate-100 px-2 py-2 space-y-2 rounded-md mt-2 mb-2">
+                                <div class="text-sm">
+                                    <div class="text-sm border-b border-dashed">{{ $t('Coupon code') }}</div>
+                                    <form v-if="coupon.length === 0" @submit.prevent="applyCoupon" class="mt-2 bg-white w-full rounded-md border-0 py-1 pl-2 pr-1 text-gray-900 shadow-sm outline-none ring-1 ring-inset placeholder:text-gray-400 sm:text-sm sm:leading-6">
+                                        <div class="flex items-center justify-between">
+                                            <input v-model="form1.coupon" class="h-full w-3/4 outline-none">
+                                            <button :class="['h-full w-[fit-content] py-0.5 px-2 text-[12px] flex items-center justify-center bg-primary text-white rounded-md', { 'opacity-50': form1.processing }]" :disabled="form1.processing">
+                                                <svg v-if="form1.processing" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8A8 8 0 0 1 12 20Z" opacity=".5"/><path fill="currentColor" d="M20 12h2A10 10 0 0 0 12 2V4A8 8 0 0 1 20 12Z"><animateTransform attributeName="transform" dur="1s" from="0 12 12" repeatCount="indefinite" to="360 12 12" type="rotate"/></path></svg>
+                                                <span v-else>{{ $t('Apply') }}</span>
+                                            </button>
+                                        </div>
+                                        <span class="text-red-500 text-xs" v-if="form1.errors.coupon">{{ form1.errors.coupon }}</span>
+                                    </form>
+                                    
+                                    <div v-else class="mt-2 flex justify-between text-sm">
+                                        <div class="flex items-center">
+                                            <h3>{{ coupon?.code }}</h3> 
+                                            <span v-if="coupon?.type == 'percentage'" class="">({{ coupon?.amount }}% OFF)</span>
+                                            <button @click="removeCoupon" class="text-red-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 20a8 8 0 1 1 0-16a8 8 0 0 1 0 16M9.707 8.293a1 1 0 0 0-1.414 1.414L10.586 12l-2.293 2.293a1 1 0 1 0 1.414 1.414L12 13.414l2.293 2.293a1 1 0 0 0 1.414-1.414L13.414 12l2.293-2.293a1 1 0 0 0-1.414-1.414L12 10.586z"/></svg>
+                                            </button>
+                                        </div>
+                                        <h3 class="text-red-500">{{ coupon?.discount }}</h3>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="flex justify-between text-xl mt-4 mb-4">
                                 <h3>{{ $t('Total due') }}</h3>
                                 <h3>{{ amountDue }}</h3>
                             </div>
                             <hr>
-                            <h2 v-if="parseInt(amountDue) > 0" class="text-[14px] mt-3 mb-2">{{ $t('Pay via') }}</h2>
-                            <div v-if="parseInt(amountDue) > 0" class="flex grid grid-cols-2 gap-2">
+                            <h2 v-if="parseFloat(amountDue) > 0" class="text-[14px] mt-3 mb-2">{{ $t('Pay via') }}</h2>
+                            <div v-if="parseFloat(amountDue) > 0" class="flex grid grid-cols-2 gap-2">
                                 <div v-for="(item, index) in props.methods" :key="index" class="">
                                     <div class="flex items-center">
                                         <label @click="selectPayment(item.name)" for="myCheckbox" class="cursor-pointer">

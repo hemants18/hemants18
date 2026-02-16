@@ -6,6 +6,7 @@ use App\Events\NewChatEvent;
 use App\Http\Resources\ContactResource;
 use App\Helpers\CustomHelper;
 use App\Models\Chat;
+use App\Models\Tag;
 use App\Models\ChatLog;
 use App\Models\ChatMedia;
 use App\Models\ChatTicket;
@@ -47,7 +48,7 @@ class ChatService
         $config = $config ? json_decode($config, true) : [];
 
         $accessToken = $config['whatsapp']['access_token'] ?? null;
-        $apiVersion = 'v22.0';
+        $apiVersion = config('graph.api_version');
         $appId = $config['whatsapp']['app_id'] ?? null;
         $phoneNumberId = $config['whatsapp']['phone_number_id'] ?? null;
         $wabaId = $config['whatsapp']['waba_id'] ?? null;
@@ -64,6 +65,7 @@ class ChatService
         $closedCount = ChatTicket::where('status', 'open')->count();
         $allCount = ChatTicket::count();
         $config = Organization::where('id', $this->organizationId)->first();
+        $tags = Tag::where('organization_id', $this->organizationId)->whereNull('deleted_at')->get();
         $agents = Team::where('organization_id', $this->organizationId)->get();
         $ticketState = $request->status == null ? 'all' : $request->status;
         $sortDirection = $request->session()->get('chat_sort_direction') ?? 'desc';
@@ -118,7 +120,7 @@ class ChatService
 
         if ($uuid !== null) {
             // If $uuid is provided, get the chat thread for a specific contact
-            $contact = Contact::with(['lastChat', 'lastInboundChat', 'notes', 'contactGroups'])->where('uuid', $uuid)->first();
+            $contact = Contact::with(['lastChat', 'lastInboundChat', 'notes', 'contactGroups','tags.tag'])->where('uuid', $uuid)->first();
             //$chats = $contact->chats()->with('media', 'user')->where('deleted_at', null)->get();
             $ticket = ChatTicket::with('user')->where('contact_id', $contact->id)->first();
 
@@ -189,7 +191,8 @@ class ChatService
                     'addon' => $aimodule,
                     'chat_sort_direction' => $sortDirection,
                     'unreadMessages' => $unreadMessages,
-                    'isChatLimitReached' => SubscriptionService::isSubscriptionFeatureLimitReached($this->organizationId, 'message_limit')
+                    'isChatLimitReached' => SubscriptionService::isSubscriptionFeatureLimitReached($this->organizationId, 'message_limit'),
+                    'tags' => $tags
                 ]);
             }
         }
@@ -215,7 +218,8 @@ class ChatService
                 'addon' => $aimodule,
                 'ticket' => array(),
                 'chat_sort_direction' => $sortDirection,
-                'isChatLimitReached' => SubscriptionService::isSubscriptionFeatureLimitReached($this->organizationId, 'message_limit')
+                'isChatLimitReached' => SubscriptionService::isSubscriptionFeatureLimitReached($this->organizationId, 'message_limit'),
+                'tags' => $tags
             ]);
         }
     }

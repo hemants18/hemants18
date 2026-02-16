@@ -37,6 +37,15 @@ class SignupRequest extends FormRequest
             if ($this->has('organization_name')) {
                 $rules['organization_name'] = 'required';
             }
+
+            if ($this->has('phone')) {
+                $rules['phone'] = [
+                    'required',
+                    'string',
+                    'max:255',
+                    'phone:AUTO',
+                ];
+            }
         }
 
         // Only require password if it exists in the request
