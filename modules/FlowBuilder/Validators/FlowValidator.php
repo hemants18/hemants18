@@ -19,6 +19,8 @@ class FlowValidator
         foreach ($nodes['nodes'] as $node) {
             $data = $node['data']['metadata']['fields'] ?? [];
 
+
+
             // Validate based on node type
             switch ($node['type']) {
                 case 'start':
@@ -57,6 +59,14 @@ class FlowValidator
                     }
                     break;
 
+                case 'inputnode':
+
+                    $listValidation = $this->validateInputNode($data);
+                    if ($listValidation !== true) {
+                        $errors['list'] = $listValidation;
+                    }
+                    break;
+
                 default:
                     $errors['unknown'] = 'Unknown node type: ' . $node['type'];
                     break;
@@ -65,6 +75,153 @@ class FlowValidator
 
         // Return true if no errors found, otherwise return errors
         return empty($errors) ? true : $errors;
+    }
+
+    /**
+     * Validate a input node.
+     *
+     * @param array $data
+     * @return bool|string
+     */
+    private function validateInputNode(array $data)
+    {
+        $errors = [];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate title
+        |--------------------------------------------------------------------------
+        */
+
+        if (empty($data['title'])) {
+            $errors[] = 'Title is required.';
+        } elseif (strlen($data['title']) > 255) {
+            $errors[] = 'Title max length is 255 characters.';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate confirmation message
+        |--------------------------------------------------------------------------
+        */
+
+        if (empty($data['confirmation_message'])) {
+            $errors[] = 'Confirmation message is required.';
+        } elseif (strlen($data['confirmation_message']) > 500) {
+            $errors[] = 'Confirmation message max length is 500.';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validate fields
+        |--------------------------------------------------------------------------
+        */
+
+        if (empty($data['fields']) || !is_array($data['fields'])) {
+
+            $errors[] = 'Minimum 1 field is required.';
+            return $errors;
+
+        }
+
+        if (count($data['fields']) > 50) {
+
+            $errors[] = 'Maximum 50 fields allowed.';
+
+        }
+
+        $allowedTypes = [
+            'text',
+            'phone',
+            'email',
+            'number',
+            'date',
+            'time',
+            'textarea',
+            'url'
+        ];
+
+        $keys = [];
+
+        foreach ($data['fields'] as $index => $field) {
+
+            $position = $index + 1;
+
+            /*
+            |--------------------------------------------------------------------------
+            | key validation
+            |--------------------------------------------------------------------------
+            */
+
+            if (empty($field['key'])) {
+
+                $errors[] = "Field {$position}: key is required.";
+
+            } elseif (strlen($field['key']) > 50) {
+
+                $errors[] = "Field {$position}: key max length is 50.";
+
+            } elseif (in_array($field['key'], $keys)) {
+
+                $errors[] = "Field {$position}: duplicate key '{$field['key']}'.";
+
+            } else {
+
+                $keys[] = $field['key'];
+
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | question validation
+            |--------------------------------------------------------------------------
+            */
+
+            if (empty($field['question'])) {
+
+                $errors[] = "Field {$position}: question is required.";
+
+            } elseif (strlen($field['question']) > 500) {
+
+                $errors[] = "Field {$position}: question max length is 500.";
+
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | input_type validation
+            |--------------------------------------------------------------------------
+            */
+
+            if (empty($field['input_type'])) {
+
+                $errors[] = "Field {$position}: input_type is required.";
+
+            } elseif (!in_array($field['input_type'], $allowedTypes)) {
+
+                $errors[] = "Field {$position}: invalid input_type '{$field['input_type']}'.";
+
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | required validation
+            |--------------------------------------------------------------------------
+            */
+
+            if (isset($field['required'])) {
+
+                if (!in_array($field['required'], [0, 1, true, false], true)) {
+
+                    $errors[] = "Field {$position}: required must be true or false.";
+
+                }
+
+            }
+
+        }
+
+        return !empty($errors) ? $errors : true;
     }
 
     /**

@@ -205,9 +205,9 @@ class WebhookController extends BaseController
 
                         if($contact){
                             if($contact->first_name == NULL){
-                                $contactData = $res['value']['contacts'][0]['profile'];
+                                $contactData = isset($res['value']['contacts'][0]['profile']) ? $res['value']['contacts'][0]['profile'] : [];
                                 $contact->update([
-                                    'first_name' => $contactData['name'],
+                                    'first_name' => $contactData ? $contactData['name'] : null,
                                 ]);
                             }
 

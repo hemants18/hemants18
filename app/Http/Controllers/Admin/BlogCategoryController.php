@@ -27,8 +27,8 @@ class BlogCategoryController extends BaseController
     * @return Response
     */
     public function index(Request $request){
-        return Inertia::render('Admin/Faq/Index', [
-            'title' => __('FAQs'),
+        return Inertia::render('Admin/Blog/Category', [
+            'title' => __('Blog Category'),
             'rows' => $this->blogCategoryService->get($request), 
             'filters' => $request->all()
         ]);
@@ -43,7 +43,7 @@ class BlogCategoryController extends BaseController
     {
         $query = $this->blogCategoryService->getByUuid(NULL);
 
-        return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
+        return Inertia::render('Admin/Blog/Category', ['title' => __('FAQs'), 'faq' => $query]);
     }
 
     /**
@@ -51,14 +51,14 @@ class BlogCategoryController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreFaq $request)
+    public function store(StoreBlogCategory $request)
     {
         $this->blogCategoryService->store($request);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/categories')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq added successfully!')
+                'message' => __('Blog Category added successfully!')
             ]
         );
     }
@@ -72,8 +72,8 @@ class BlogCategoryController extends BaseController
     public function show($id)
     {
         $query = $this->blogCategoryService->getByUuid($id);
-
-        return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
+        return response()->json(['success' => true, 'item'=> $query]);
+        // return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
     }
 
     /**
@@ -82,14 +82,14 @@ class BlogCategoryController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(StoreFaq $request, $id)
+    public function update(StoreBlogCategory $request, $id)
     {
         $this->blogCategoryService->store($request, $id);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/categories')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq updated successfully!')
+                'message' => __('Blog Category updated successfully!')
             ]
         );
     }
@@ -104,10 +104,10 @@ class BlogCategoryController extends BaseController
     {
         $this->blogCategoryService->delete($id);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/categories')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq deleted successfully!')
+                'message' => __('Blog Category deleted successfully!')
             ]
         );
     }

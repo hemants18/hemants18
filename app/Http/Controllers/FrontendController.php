@@ -13,7 +13,7 @@ use App\Models\Query;
 use App\Models\Setting;
 use App\Models\SubscriptionPlan;
 use App\Services\CampaignService;
-use App\Services\UpdateService;
+use App\Services\BlogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
@@ -23,11 +23,13 @@ use DB;
 class FrontendController extends BaseController
 {
     private $campaignService;
+    private $blogService;
     private $frontend;
 
-    public function __construct(CampaignService $campaignService)
+    public function __construct(CampaignService $campaignService, BlogService $blogService)
     {
         $this->campaignService = $campaignService;
+        $this->blogService = $blogService;
 
         $this->frontend = Setting::where('key', 'display_frontend')->first();
         $this->frontend->frontend_active = $this->frontend ? $this->frontend->value : 1;
@@ -49,7 +51,7 @@ class FrontendController extends BaseController
             $data['pages'] = Page::get();
             $data['addons'] = Addon::where('status', 1)->where('is_plan_restricted', 1)->pluck('is_active', 'name');
             $data['enable_ai_billing'] = Setting::where('key', 'enable_ai_billing')->value('value') ?? 0;
-
+            $data['blog'] = $this->blogService->publishBlogs();
             return Inertia::render('Frontend/Index', $data);
             // return Inertia::render('Frontend/Index', $data);
         } else {
@@ -77,6 +79,23 @@ class FrontendController extends BaseController
         $data['companyConfig'] = Setting::whereIn('key', $keys)->pluck('value', 'key')->toArray();
 
         return Inertia::render('Frontend/About', $data);
+    }
+
+
+    public function blogs(Request $request) {
+        $keys = ['logo', 'company_name', 'address', 'email', 'phone', 'socials', 'trial_period'];
+        $data['companyConfig'] = Setting::whereIn('key', $keys)->pluck('value', 'key')->toArray();
+        $data['blog'] = $this->blogService->BlogsList($request);
+
+        return Inertia::render('Frontend/Blog', $data);
+    }
+
+    public function blogDetail($slug) {
+        $keys = ['logo', 'company_name', 'address', 'email', 'phone', 'socials', 'trial_period'];
+        $data['companyConfig'] = Setting::whereIn('key', $keys)->pluck('value', 'key')->toArray();
+        $data['blog'] = $this->blogService->blogsDetail($slug);
+        
+        return Inertia::render('Frontend/BlogDetail', $data);
     }
 
     public function pricing(Request $request){
@@ -175,7 +194,7 @@ class FrontendController extends BaseController
         );
     }
 
-    public function migrate(){
-        (new UpdateService)->migrate('1.4');
-    }
+    // public function migrate(){
+    //     (new UpdateService)->migrate('1.4');
+    // }
 }

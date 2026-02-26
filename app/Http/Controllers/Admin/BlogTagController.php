@@ -27,23 +27,11 @@ class BlogTagController extends BaseController
     * @return Response
     */
     public function index(Request $request){
-        return Inertia::render('Admin/Faq/Index', [
-            'title' => __('FAQs'),
+        return Inertia::render('Admin/Blog/Tags', [
+            'title' => __('TAGs'),
             'rows' => $this->blogTagService->get($request), 
             'filters' => $request->all()
         ]);
-    }
-
-    /**
-     * Display Form
-     *
-     * @param $request
-     */
-    public function create(Request $request)
-    {
-        $query = $this->blogTagService->getByUuid(NULL);
-
-        return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
     }
 
     /**
@@ -51,14 +39,14 @@ class BlogTagController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreFaq $request)
+    public function store(StoreBlogTag $request)
     {
         $this->blogTagService->store($request);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/tags')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq added successfully!')
+                'message' => __('Tag added successfully!')
             ]
         );
     }
@@ -72,24 +60,23 @@ class BlogTagController extends BaseController
     public function show($id)
     {
         $query = $this->blogTagService->getByUuid($id);
-
-        return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
+        return response()->json(['success' => true, 'item'=> $query]);
     }
-
+    
     /**
      * Update record.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(StoreFaq $request, $id)
+    public function update(StoreBlogTag $request, $id)
     {
         $this->blogTagService->store($request, $id);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/tags')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq updated successfully!')
+                'message' => __('Tag updated successfully!')
             ]
         );
     }
@@ -104,10 +91,10 @@ class BlogTagController extends BaseController
     {
         $this->blogTagService->delete($id);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/tags')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq deleted successfully!')
+                'message' => __('Tag deleted successfully!')
             ]
         );
     }

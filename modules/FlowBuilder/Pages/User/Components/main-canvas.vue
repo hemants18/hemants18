@@ -12,6 +12,7 @@ import ListNode from './vue-flow/nodes/List-node.vue'
 import MediaNode from './vue-flow/nodes/Media-node.vue'
 import TextNode from './vue-flow/nodes/Text-node.vue'
 import Contact from './vue-flow/nodes/Contact.vue'
+import Input from './vue-flow/nodes/InputNode.vue'
 import { Test_data } from '@/lib/constant'
 
 import type { Dimensions, Elements } from '@vue-flow/core'
@@ -27,6 +28,7 @@ const nodeTypes = {
   media: markRaw(MediaNode),
   text: markRaw(TextNode),
   contact: markRaw(Contact),
+  inputnode: markRaw(Input),
 }
 
 const { findNode, nodes, edges, viewport, addNodes, addEdges, project, vueFlowRef, onConnect, onNodeDragStop, setNodes, setEdges, setViewport, onViewportChange } =
@@ -182,9 +184,9 @@ function handleOnDragOver(event: DragEvent) {
       <Background />
     </VueFlow>
   </div>
-  <!--<div class="h-1/2">
+  <div class="h-1/2">
     {{ nodes }}
-  </div>-->
+  </div>
   
 </template>
 
@@ -200,5 +202,27 @@ function handleOnDragOver(event: DragEvent) {
 .vue-flow__handle {
   width: 18px;
   height: 18px;
+  background: #2a823f;
+  border: 2px solid white;
+  border-radius: 50%;
+  position: absolute;
+  z-index: 10;
+}
+
+.vue-flow__handle-left {
+  left: -7px;
+}
+
+.vue-flow__handle-right {
+  right: -7px;
+}
+
+.vue-flow__edge-path {
+  stroke: #2a823f;
+  stroke-width: 2;
+}
+
+.vue-flow__edge {
+  z-index: 5;
 }
 </style>

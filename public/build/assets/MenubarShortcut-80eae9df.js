@@ -1,0 +1,1 @@
+import{c as s}from"./utils-3f044a58.js";import{B as e,o as t,c as o,p as r,n,u as c}from"./app-192ed295.js";const i=e({__name:"MenubarShortcut",setup(l){return(a,p)=>(t(),o("span",{class:n(c(s)("text-xxs ml-auto tracking-widest opacity-50",a.$attrs.class??""))},[r(a.$slots,"default")],2))}});export{i as default};

@@ -60,6 +60,8 @@ Route::middleware('frontend.inertia')->group(function () {
     Route::match(['get', 'post'], '/privacy', [App\Http\Controllers\FrontendController::class, 'privacy']);
     Route::match(['get', 'post'], '/terms-of-service', [App\Http\Controllers\FrontendController::class, 'termsOfService']);
     Route::match(['get', 'post'], '/process-campaign', [App\Http\Controllers\FrontendController::class, 'buildTemplateChatMessage']);
+    Route::match(['get', 'post'], '/blogs', [App\Http\Controllers\FrontendController::class, 'blogs']);
+    Route::get('/blogs/{slug}', [App\Http\Controllers\FrontendController::class, 'blogDetail']);
     Route::get('/language/{locale}', [App\Http\Controllers\FrontendController::class, 'changeLanguage']);
 });
 
@@ -223,6 +225,7 @@ Route::middleware(['auth:user'])->group(function () {
                 Route::group(['middleware' => 'check.client.role'], function () {
                     Route::get('/settings', [App\Http\Controllers\User\SettingController::class, 'index']);
                     Route::get('/settings/m', [App\Http\Controllers\User\SettingController::class, 'mobileView']);
+                    Route::get('/settings/subscriber', [App\Http\Controllers\User\SettingController::class, 'optInOrOut']);
 
                     Route::get('/settings/whatsapp', [App\Http\Controllers\User\SettingController::class, 'viewWhatsappSettings']);
                     Route::get('/settings/plugins', [App\Http\Controllers\User\PluginController::class, 'index']);
@@ -285,8 +288,8 @@ Route::prefix('admin')->middleware(['auth:admin'])->group(function () {
     Route::post('/addons/setup/flow-builder', [Modules\FlowBuilder\Controllers\SetupController::class, 'store']);
     Route::put('/addons/setup/flow-builder', [Modules\FlowBuilder\Controllers\SetupController::class, 'update']);
 
-    Route::post('/addons/setup/ai-assistant', [Modules\IntelliReply\Controllers\SetupController::class, 'store']);
-    Route::put('/addons/setup/ai-assistant', [Modules\IntelliReply\Controllers\SetupController::class, 'update']);
+    // Route::post('/addons/setup/ai-assistant', [Modules\IntelliReply\Controllers\SetupController::class, 'store']);
+    // Route::put('/addons/setup/ai-assistant', [Modules\IntelliReply\Controllers\SetupController::class, 'update']);
 
     Route::resource('payment-gateways', App\Http\Controllers\Admin\PaymentGatewayController::class)->only(['index', 'show', 'update']);
     Route::get('/languages/{language}/export', [App\Http\Controllers\Admin\LanguageController::class, 'export']);

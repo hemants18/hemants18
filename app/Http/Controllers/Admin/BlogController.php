@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use DB;
 use App\Http\Controllers\Controller as BaseController;
-use App\Http\Requests\StoreBlog;
+use App\Http\Requests\StoreBlogRequest;
 use App\Services\BlogService;
+use App\Services\BlogCategoryService;
+use App\Services\BlogAuthorService;
+use App\Services\BlogTagService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule; 
@@ -16,9 +19,17 @@ use Validator;
 
 class BlogController extends BaseController
 {
-    public function __construct(BlogService $blogService)
+    public function __construct(
+        BlogService $blogService,
+        BlogAuthorService $BlogAuthorService,
+        BlogCategoryService $BlogCategoryService,
+        BlogTagService $BlogTagService,
+    )
     {
         $this->blogService = $blogService;
+        $this->BlogAuthorService = $BlogAuthorService;
+        $this->BlogCategoryService = $BlogCategoryService;
+        $this->BlogTagService = $BlogTagService;
     }
 
     /**
@@ -28,22 +39,13 @@ class BlogController extends BaseController
     */
     public function index(Request $request){
         return Inertia::render('Admin/Blog/Post', [
-            'title' => __('FAQs'),
-            'rows' => $this->blogService->get($request), 
+            'title' => __('Blog'),
+            'rows' => $this->blogService->get($request),
+            'tags' => $this->BlogTagService->getActive()->map(function ($tag) { return [ 'id' => $tag->name,'name' => $tag->name];}), 
+            'author' => $this->BlogAuthorService->getActive()->map(function ($author) { return [ 'value' => $author->id,'label' => $author->full_name];}), 
+            'category' => $this->BlogCategoryService->getActive()->map(function ($category) { return [ 'value' => $category->id,'label' => $category->name];}), 
             'filters' => $request->all()
         ]);
-    }
-
-    /**
-     * Display Form
-     *
-     * @param $request
-     */
-    public function create(Request $request)
-    {
-        $query = $this->blogService->getByUuid(NULL);
-
-        return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
     }
 
     /**
@@ -51,14 +53,14 @@ class BlogController extends BaseController
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreFaq $request)
+    public function store(StoreBlogRequest $request)
     {
         $this->blogService->store($request);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/posts')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq added successfully!')
+                'message' => __('Blog added successfully!')
             ]
         );
     }
@@ -73,7 +75,7 @@ class BlogController extends BaseController
     {
         $query = $this->blogService->getByUuid($id);
 
-        return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
+        return response()->json(['success' => true, 'item'=> $query]);
     }
 
     /**
@@ -82,14 +84,14 @@ class BlogController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(StoreFaq $request, $id)
+    public function update(StoreBlogRequest $request, $id)
     {
         $this->blogService->store($request, $id);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/posts')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq updated successfully!')
+                'message' => __('Blog updated successfully!')
             ]
         );
     }
@@ -104,10 +106,10 @@ class BlogController extends BaseController
     {
         $this->blogService->delete($id);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/posts')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq deleted successfully!')
+                'message' => __('Blog deleted successfully!')
             ]
         );
     }

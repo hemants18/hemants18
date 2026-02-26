@@ -30,7 +30,7 @@
         <div class="row pt-50 pb-50">
           <!-- Col 1: Logo & Social -->
           <div class="col-lg-3 mb-4 mb-lg-0">
-            <Link href="./" class="footer_logo_wrapper">
+            <Link href="/" class="footer_logo_wrapper">
               <img
                 src="@/assets/images/wabizboost-logo.png"
                 alt="Wabizboost"
@@ -79,7 +79,7 @@
             <h4 class="footer_heading text-white mb-3">Resource</h4>
             <ul class="footer_links list-unstyled">
               <li><Link href="/contact-us">Help Desk</Link></li>
-              <li><Link href="#">Blog</Link></li>
+              <li><Link href="/blogs">Blog</Link></li>
               <li><Link href="#">Templates</Link></li>
             </ul>
           </div>

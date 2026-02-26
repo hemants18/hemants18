@@ -10,6 +10,7 @@ use App\Models\Organization;
 use App\Models\Setting;
 use App\Services\MediaService;
 use App\Services\WhatsappService;
+use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -180,39 +181,45 @@ class AutoReplyService
 
     private function handleBasicReplies($chat)
     {
-        $organizationId = $chat->organization_id;
-        $text = '';
-        $metadata = json_decode($chat->metadata, true);
-
-        if($metadata['type'] == 'text'){
-            $text = $metadata['text']['body'];
-        } else if(json_decode($chat->metadata)->type == 'button'){
-            $text = $metadata['button']['payload'];
-        } else if(json_decode($chat->metadata)->type == 'interactive'){
-            if($metadata['interactive']['type'] == 'button_reply'){
-                $text = $metadata['interactive']['button_reply']['title'];
-            } else if($metadata['interactive']['type'] == 'list_reply'){
-                $text = $metadata['interactive']['list_reply']['title'];
-            }
-        }
+        $isCannedLimitReached = SubscriptionService::isSubscriptionFeatureLimitReached($chat->organization_id, 'canned_replies_limit');
         
-        $receivedMessage = " " . strtolower($text);
+        if(!$isCannedLimitReached) {
 
-        //Check basic reply flow
-        $autoReplies = AutoReply::where('organization_id', $organizationId)
-            ->where('deleted_at', null)
-            ->get();
+            $organizationId = $chat->organization_id;
+            $text = '';
+            $metadata = json_decode($chat->metadata, true);
 
-        foreach ($autoReplies as $autoReply) {
-            $triggerValues = $this->getTriggerValues($autoReply->trigger);
-
-            foreach ($triggerValues as $trigger) {
-                if ($this->checkMatch($receivedMessage, $trigger, $autoReply->match_criteria)) {
-                    $this->sendReply($chat, $autoReply);
-                    return true;
+            if($metadata['type'] == 'text'){
+                $text = $metadata['text']['body'];
+            } else if(json_decode($chat->metadata)->type == 'button'){
+                $text = $metadata['button']['payload'];
+            } else if(json_decode($chat->metadata)->type == 'interactive'){
+                if($metadata['interactive']['type'] == 'button_reply'){
+                    $text = $metadata['interactive']['button_reply']['title'];
+                } else if($metadata['interactive']['type'] == 'list_reply'){
+                    $text = $metadata['interactive']['list_reply']['title'];
                 }
             }
+            
+            $receivedMessage = " " . strtolower($text);
+            //Check basic reply flow
+            $autoReplies = AutoReply::where('organization_id', $organizationId)
+                ->where('deleted_at', null)
+                ->get();
+
+            foreach ($autoReplies as $autoReply) {
+                $triggerValues = $this->getTriggerValues($autoReply->trigger);
+
+                foreach ($triggerValues as $trigger) {
+                    if ($this->checkMatch($receivedMessage, $trigger, $autoReply->match_criteria)) {
+                        $this->sendReply($chat, $autoReply);
+                        return true;
+                    }
+                }
+            }
+
         }
+        
 
         return false; // No reply was sent
     }
@@ -361,7 +368,7 @@ class AutoReplyService
 
         $mergedData = array_merge($data, $transformedMetadata);
 
-        Log::info($mergedData);
+        // Log::info($mergedData);
 
         return preg_replace_callback('/\{(\w+)\}/', function ($matches) use ($mergedData) {
             $key = $matches[1];

@@ -5,7 +5,11 @@
     import FormInput from '@/Components/FormInput.vue';
     import FormImage from '@/Components/FormImage.vue';
     import FormSelect from '@/Components/FormSelect.vue';
+    import FormMultiSelect from '@/Components/FormMultiSelect.vue';
+    import TextEditor from '@/Components/TextEditor.vue';
     import FormTextArea from '@/Components/FormTextArea.vue';
+    import FormToggleSwitchModified from '@/Components/FormToggleSwitchModified.vue';
+
 
     const props = defineProps({
         modelValue: Boolean,
@@ -25,21 +29,78 @@
     const isLoading = ref(false);
 
     const submitForm = async () => {
-        router.visit(props.url, {
-            method: props.formMethod,
-            data: form,
+        const formData = new FormData();
+
+        Object.keys(form).forEach(key => {
+
+            const value = form[key];
+
+            if (value instanceof File) {
+
+                formData.append(key, value);
+
+            }
+            else if (Array.isArray(value)) {
+
+                value.forEach((item, index) => {
+
+                    if (typeof item === 'object') {
+
+                        Object.keys(item).forEach(subKey => {
+
+                            formData.append(`${key}[${index}][${subKey}]`, item[subKey]);
+
+                        });
+
+                    } else {
+
+                        formData.append(`${key}[${index}]`, item);
+
+                    }
+
+                });
+
+            }
+            else if (value !== null && value !== undefined) {
+
+                formData.append(key, value);
+
+            }
+
+        });
+
+        if (props.formMethod.toLowerCase() !== 'post') {
+            formData.append('_method', props.formMethod);
+        }
+        console.log(formData);
+        router.post(props.url, formData, {   
             preserveState: true,
-            onStart: visit => {
-                isLoading.value = true;
-            },
-            onFinish: visit => {
-                isLoading.value = false;
-            },
-            onSuccess: visit => {
-                emit('closeModal', true);
-            },
-        })
+            onStart: () => isLoading.value = true,
+            onFinish: () => isLoading.value = false,
+            onSuccess: () => emit('closeModal', true),
+        });
+
     };
+
+
+    //old code 
+    // const submitForm = async () => {
+    //     router.visit(props.url, {
+    //         method: props.formMethod,
+    //         data: form,
+    //         preserveState: true,
+    //         // forceFormData: true,
+    //         onStart: visit => {
+    //             isLoading.value = true;
+    //         },
+    //         onFinish: visit => {
+    //             isLoading.value = false;
+    //         },
+    //         onSuccess: visit => {
+    //             emit('closeModal', true);
+    //         },
+    //     })
+    // };
 
     const emit = defineEmits(['update:modelValue', 'closeModal']);
 
@@ -54,7 +115,10 @@
                 <template v-for="(input, index) in formInputs" :key="index">
                     <FormInput v-if="input.inputType == 'FormInput'" v-model="form[input.name]" :name="input.label" :error="$page.props?.errors?.[input.name]" :type="input.type" :class="input.className"/>
                     <FormSelect v-else-if="input.inputType == 'FormSelect'" v-model="form[input.name]" :options="input.options" :name="input.label" :error="$page.props?.errors?.[input.name]" :class="input.className" :placeholder="input.placeholder"/>
-                    <FormImage v-else-if="input.inputType == 'FormImage'" v-model="form[input.name]" :error="$page.props?.errors?.[input.name]" :options="input.options" :label="input.label" :class="input.className"/>
+                    <FormMultiSelect v-else-if="input.inputType == 'FormMultiSelect'" v-model="form[input.name]" :options="input.options" :name="input.label" :error="$page.props?.errors?.[input.name]" :class="input.className" :placeholder="input.placeholder"/>
+                    <FormImage v-else-if="input.inputType == 'FormImage'" v-model="form[input.name]" :error="$page.props?.errors?.[input.name]" :options="input.options" :imageUrl="imageUrl" :label="input.label" :class="input.className"/>
+                    <FormToggleSwitchModified v-else-if="input.inputType == 'FormToggleSwitchModified'" v-model="form[input.name]" :error="$page.props?.errors?.[input.name]" :label="input.label" :class="input.className"/>
+                    <TextEditor v-if="input.inputType == 'FormTextEditor'" v-model="form[input.name]" :name="input.label" placeholder="Write here..." :error="$page.props?.errors?.[input.name]" :class="input.className" />
                     <FormTextArea v-else-if="input.inputType == 'FormTextArea'" v-model="form[input.name]" :error="$page.props?.errors?.[input.name]" :options="input.options" :name="input.label" :label="input.label" :class="input.className" :textAreaRows="input.textAreaRows"/>
                 </template>
                 

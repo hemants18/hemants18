@@ -755,7 +755,7 @@
       </div>
     </section>
 
-    <section class="blogs_section pt-50 pb-50" id="resources">
+    <section v-if="props.blog?.length > 0" class="blogs_section pt-50 pb-50" id="resources">
       <div class="container">
         <div class="row align-items-center blog_heading_row">
           <div class="col-lg-8">
@@ -769,7 +769,7 @@
             </div>
           </div>
           <div class="col-lg-4 text-lg-end">
-            <a href="#" class="btn btn_global btn_primary">More Blogs</a>
+            <Link href="/blogs" class="btn btn_global btn_primary">More Blogs</Link>
           </div>
         </div>
 
@@ -777,100 +777,38 @@
         <div class="swiper blogs_slider">
           <div class="swiper-wrapper">
             <!-- Blog 1 -->
-            <div class="swiper-slide">
+            <div v-for="(item, index) in props.blog" :key="index"   class="swiper-slide">
               <div class="blog_card">
                 <div class="blog_image">
-                  <img
-                    src="@/assets/images/blog-img-1.webp"
-                    alt="Instant Customer Engagement"
+                  <img v-if="item.image"
+                    :src="'/media/'+item.image"
+                    :alt="item.name"
                     class="img-fluid"
                   />
+                  <img v-else src="@/assets/images/blog-img-1.webp" alt="Instant Customer Engagement"
+                    class="img-fluid">
                 </div>
                 <div class="blog_content">
                   <div
                     class="d-flex justify-content-between align-items-center mb-2"
                   >
                     <span class="date">
-                      <i class="fa-regular fa-calendar"></i> November 28, 2026
+                      <i class="fa-regular fa-calendar"></i> {{ item.publish_date_formatted }}
                     </span>
-                    <span class="badge">WhatsApp Solutions</span>
+                    <span class="badge">{{ item.category?.name }}</span>
                   </div>
-                  <h3>Instant Customer Engagement</h3>
+                  <h3 v-html="item.title"></h3>
                   <p>
-                    Learn how WhatsApp Business helps you connect with customers
-                    instantly through verified messaging, quick replies, and
-                    real-time conversations.
+                    {{ stripHtml(item.content) }}
                   </p>
-                  <a href="#" class="read_more_link">
+                  <Link :href="'/blogs/'+item.slug" class="read_more_link">
                     READ MORE <i class="fa-solid fa-arrow-right"></i>
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
 
-            <!-- Blog 2 -->
-            <div class="swiper-slide">
-              <div class="blog_card">
-                <div class="blog_image">
-                  <img
-                    src="@/assets/images/blog-img-2.webp"
-                    alt="Automation & Faster Responses"
-                    class="img-fluid"
-                  />
-                </div>
-                <div class="blog_content">
-                  <div
-                    class="d-flex justify-content-between align-items-center mb-2"
-                  >
-                    <span class="date">
-                      <i class="fa-regular fa-calendar"></i> November 28, 2026
-                    </span>
-                    <span class="badge">WhatsApp Solutions</span>
-                  </div>
-                  <h3>Automation & Faster Responses</h3>
-                  <p>
-                    Discover how chatbots and automated workflows reduce
-                    response time, handle FAQs, and provide 24/7 customer
-                    support without increasing workload.
-                  </p>
-                  <a href="#" class="read_more_link">
-                    READ MORE <i class="fa-solid fa-arrow-right"></i>
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <!-- Blog 3 -->
-            <div class="swiper-slide">
-              <div class="blog_card">
-                <div class="blog_image">
-                  <img
-                    src="@/assets/images/blog-img-3.webp"
-                    alt="Scalable Messaging"
-                    class="img-fluid"
-                  />
-                </div>
-                <div class="blog_content">
-                  <div
-                    class="d-flex justify-content-between align-items-center mb-2"
-                  >
-                    <span class="date">
-                      <i class="fa-regular fa-calendar"></i> November 28, 2026
-                    </span>
-                    <span class="badge">WhatsApp Solutions</span>
-                  </div>
-                  <h3>Scalable Messaging For Business Growth</h3>
-                  <p>
-                    Explore how WhatsApp Business API enables bulk messaging,
-                    smart campaigns, and analytics to scale customer
-                    communication while maintaining a personal touch.
-                  </p>
-                  <a href="#" class="read_more_link">
-                    READ MORE <i class="fa-solid fa-arrow-right"></i>
-                  </a>
-                </div>
-              </div>
-            </div>
+           
           </div>
 
           <div class="swiper-pagination"></div>
@@ -996,7 +934,7 @@ import Pricing from './Partials/Pricing.vue'
 import FAQ from './Partials/FAQ.vue'
 import { toast } from 'vue3-toastify';
 
-const props = defineProps(['addons', 'enable_ai_billing', 'faqs', 'plans', 'reviews', 'companyConfig', 'languages', 'currentLanguage', 'currency', 'pages', 'config', 'flash']);
+const props = defineProps(['addons', 'enable_ai_billing', 'faqs', 'plans', 'reviews', 'companyConfig', 'languages', 'currentLanguage', 'currency', 'pages', 'config', 'flash', 'blog']);
 
 // --------------------
 // State
@@ -1073,6 +1011,13 @@ const handleScroll = () => {
 
   header.classList.toggle('fixed_header', window.scrollY > 50)
 }
+
+const stripHtml = (html) => {
+    const div = document.createElement('div')
+    div.innerHTML = html
+    return div.textContent.substring(0, 120) + '...'
+}
+
 
 // --------------------
 // Lifecycle

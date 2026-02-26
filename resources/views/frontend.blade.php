@@ -43,7 +43,7 @@
       property="og:description"
       content="Automate chats, broadcast messages, and boost sales with the world's most popular messaging app."
     />
-    <meta property="og:image" content="assets/images/hero_dashboard.png" />
+    <meta property="og:image" content="{{asset('assets/images/hero_dashboard.png')}}" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
@@ -59,17 +59,17 @@
     <meta property="twitter:image" content="assets/images/hero_dashboard.png" />
 
     <!-- Favicon Links -->
-    <link rel="icon" type="image/png" href="assets/images/favicon.png" />
+    <link rel="icon" type="image/png" href="{{asset('assets/images/favicon.png')}}" />
 
     @vite(['resources/js/app.js', 'resources/css/app.css'])
 
     <!-- External CSS Libraries -->
-    <link href="assets/css/bootstrap.min.css" rel="stylesheet" />
-    <link rel="stylesheet" href="assets/css/style.css" />
-    <link rel="stylesheet" href="assets/css/swiper-bundle.min.css" />
+    <link href="{{asset('assets/css/bootstrap.min.css')}}" rel="stylesheet" />
+    <link rel="stylesheet" href="{{asset('assets/css/style.css')}}" />
+    <link rel="stylesheet" href="{{asset('assets/css/swiper-bundle.min.css')}}" />
 
     <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="assets/css/font-awesome.6.5.1.all.min.css" />
+    <link rel="stylesheet" href="{{asset('assets/css/font-awesome.6.5.1.all.min.css')}}" />
     @if (!empty($google_analytics))
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ $google_analytics }}"></script>
@@ -87,10 +87,10 @@
     @inertia
 
 
-    <script src="assets/js/jquery.js"></script>
-    <script src="assets/js/bootstrap.bundle.min.js"></script>
-    <script src="assets/js/swiper-bundle.min.js"></script>
+    <script src="{{asset('assets/js/jquery.js')}}"></script>
+    <script src="{{asset('assets/js/bootstrap.bundle.min.js')}}"></script>
+    <script src="{{asset('assets/js/swiper-bundle.min.js')}}"></script>
     <!-- Custom Script -->
-    <script src="assets/js/script.js"></script>
+    <script src="{{asset('assets/js/script.js')}}"></script>
 </body>
 </html>

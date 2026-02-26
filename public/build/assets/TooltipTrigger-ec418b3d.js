@@ -1,0 +1,1 @@
+import{ak as s}from"./index-1f855c39.js";import{B as r,o as t,f as p,g as n,p as l,a8 as i,a9 as c,u as f}from"./app-192ed295.js";const _=r({__name:"TooltipTrigger",props:{asChild:{type:Boolean},as:{}},setup(a){const e=a;return(o,u)=>(t(),p(f(s),i(c(e)),{default:n(()=>[l(o.$slots,"default")]),_:3},16))}});export{_ as default};

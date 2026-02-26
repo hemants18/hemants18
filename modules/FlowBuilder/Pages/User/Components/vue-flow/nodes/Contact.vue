@@ -73,7 +73,7 @@ const shouldShowWarning = computed(() => {
       <!-- Header -->
       <div class="flex justify-between items-center">
         <div class="flex gap-x-2">
-          <img src="~@/assets/images/icon_booking.png" class="mt-1 h-4 w-4" />
+          <img src="~@/assets/images/icon_LLM.png" class="mt-1 h-4 w-4" />
           <div>
             <FormInput
               v-if="isEditTitle"

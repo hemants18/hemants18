@@ -44,6 +44,12 @@
                                 <span>{{ $t('Tag settings') }}</span>
                             </Link>
                         </li>
+                        <!-- <li class="hover:bg-slate-50 hover:text-black rounded-[5px] px-1 truncate cursor-pointer" :class="$page.url.startsWith('/settings/subscriber') ? 'bg-slate-50 text-black' : ''">
+                            <Link rel="noopener noreferrer" href="/settings/subscriber" class="flex items-center p-2 space-x-3 rounded-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M16 16H13L9.75 12H1V10L3 8V5C3 4.60587 3.0456 4.22239 3.13182 3.85455L0 0H3L16 16Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/><path d="M13 8.61539L6.25443 0.313149C6.79787 0.11067 7.38601 0 8 0C10.7614 0 13 2.23858 13 5V8.61539Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/> <path d="M7.99999 16C6.69378 16 5.58254 15.1652 5.1707 14H8.375L9.61633 15.5278C9.14984 15.8267 8.59515 16 7.99999 16Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
+                                <span>{{ $t('Subscriber Management') }}</span>
+                            </Link>
+                        </li> -->
 
                          <!-- <li v-if="moduleActive('AI Assistant') || moduleActive('Flow builder')" class="hover:bg-slate-50 hover:text-black rounded-[5px] px-1 truncate cursor-pointer" :class="$page.url.startsWith('/settings/automation') ? 'bg-slate-50 text-black' : ''">
                             <Link rel="noopener noreferrer" href="/settings/automation" class="flex items-center p-2 space-x-3 rounded-md">

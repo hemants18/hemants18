@@ -1,8 +1,12 @@
 <script setup>
-    import { ref } from 'vue';
+    import { ref,watch } from 'vue';
 
     const props = defineProps({
-        modelValue: File,
+        modelValue: {
+            type: [File, String, null],
+            default: null
+        },
+        // modelValue: File,
         name: String,
         label: String,
         className: String,
@@ -14,6 +18,19 @@
 
     const imageViewUrl = ref(props.imageUrl);
     const emit = defineEmits(['update:modelValue']);
+
+
+
+    // show preview when editing
+    watch(() => props.modelValue, (value) => {
+
+       if (typeof value === 'string') {
+
+            imageViewUrl.value = '/media/' + value
+
+        }
+
+    }, { immediate: true })
 
     const updateValue = (event) => {
         const fileSizeLimit = 5 * 1024 * 1024;

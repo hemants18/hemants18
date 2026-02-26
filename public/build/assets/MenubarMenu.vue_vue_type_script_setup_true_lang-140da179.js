@@ -1,0 +1,1 @@
+import{G as r}from"./index-1f855c39.js";import{B as s,o as t,f as n,g as p,p as u,a8 as c,a9 as f,u as l}from"./app-192ed295.js";const d=s({__name:"MenubarMenu",props:{value:{}},setup(a){const e=a;return(o,m)=>(t(),n(l(r),c(f(e)),{default:p(()=>[u(o.$slots,"default")]),_:3},16))}});export{d as _};

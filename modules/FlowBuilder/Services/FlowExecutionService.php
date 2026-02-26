@@ -121,8 +121,14 @@ class FlowExecutionService
         $edges = \Arr::get($edgesArray, "edges", null);
         $metadataArray = $this->findEdgesBySource($edges, $flowData->current_step, $message);
 
+
+        // \Log::info('metadataArray ---->'. count($metadataArray));
+        // \Log::info('msg ---->'. $message);
+        // \Log::info('flowData->current_step ---->'. $flowData->current_step);
+
         if(empty($metadataArray)){
-            FlowUserData::where('contact_id', $contactId)->delete();
+            FlowUserData::where('contact_id', $contactId)->update(['current_step'=>0,'input_index'=>0]);
+            // FlowUserData::where('contact_id', $contactId)->delete();
             $this->executeFlow($chat, $isNewContact, $message);
 
             return false;
@@ -190,6 +196,17 @@ class FlowExecutionService
                     $buttonLabel
                 );
                 break;
+
+            case 'input':
+            return $this->handleInputNode(
+                    $contact,
+                    $flowData,
+                    $fieldsArray,
+                    $chat,
+                    $metadataArray['id']
+                );
+
+                break;
         }
 
         if($response){
@@ -199,6 +216,20 @@ class FlowExecutionService
                     'flow_id' => $flowData->flow_id,
                     'chat_id' => $response->data->chat->id
                 ]);
+
+                // $flowUserData = FlowUserData::where('contact_id', $contactId)->first();
+
+                // if ($flowUserData && in_array(strtolower($type), ['media', 'text'])) {
+
+                //     $this->autoExecuteNextNode(
+                //         $chat,
+                //         $flowUserData,
+                //         $edges,
+                //         $metadataArray['id'],
+                //         $contactId
+                //     );
+                // }
+
                 return true;
             } else {
                 \Log::info((array) $response);
@@ -207,6 +238,159 @@ class FlowExecutionService
 
         return false;
     }
+
+    //Auto Execute Next Node
+    protected function autoExecuteNextNode($chat, $flowUserData, $edges, $currentStepId, $contactId)
+    {
+        \Log::info('Auto Execute Current Node ID: ' . $currentStepId);
+
+        $nextEdge = $this->findEdgesBySource($edges, $currentStepId, '');
+
+        if (!$nextEdge) {
+            \Log::info('No next node');
+            return;
+        }
+
+        $nextNodeId = $nextEdge['id'];
+
+        $fieldsArray = \Arr::get($nextEdge, "data.metadata.fields", []);
+        $type = strtolower($fieldsArray['type'] ?? '');
+
+        \Log::info('Next Node Type: ' . $type);
+
+        \Log::info('Auto Execute Next Node Next Node ID: ' . $nextNodeId);
+
+         if ( !in_array($type, ['input']) ) {
+            \Log::info('Stopping auto execution at node: ' . $nextNodeId);
+            FlowUserData::where('contact_id', $contactId)
+                ->update([
+                    'current_step' => $nextNodeId
+                ]);
+        }
+        // Execute automatically
+
+        $this->processFlow(
+            $chat,
+            false,
+            $flowUserData,
+            $contactId,
+            ''
+        );
+    }
+
+    //for InputNode
+    private function handleInputNode($contact, $flowData, $nodeData, $chat,$id)
+    {
+        $fields = $nodeData['fields'] ?? [];
+
+        if (empty($fields)) {
+            return false;
+        }
+
+        $currentFieldIndex = $flowData->input_index ?? 0;
+
+        /*
+        STEP 1: FIRST TIME entering input node
+        Ask first question only
+        */
+        if ($currentFieldIndex == 0 && empty($flowData->metadata)) {
+
+            FlowUserData::where('contact_id', $contact->id)
+                ->update([
+                    'input_index' => 1
+                ]);
+
+             return $this->whatsappService->sendMessage(
+                $contact->uuid,
+                $fields[0]['question'],
+                'text'
+            );
+        }
+
+        /*
+        STEP 2: Save previous answer
+        */
+
+        $previousFieldIndex = $currentFieldIndex - 1;
+
+        if (!isset($fields[$previousFieldIndex])) {
+            return false;
+        }
+
+        $currentField = $fields[$previousFieldIndex];
+
+        $metadata = $flowData->metadata
+            ? json_decode($flowData->metadata, true)
+            : [];
+
+
+        $text = '';
+        $chatmetadata = json_decode($chat->metadata, true);
+
+        if($chatmetadata['type'] == 'text'){
+            $text = $chatmetadata['text']['body'];
+        } else if(json_decode($chat->metadata)->type == 'button'){
+            $text = $chatmetadata['button']['payload'];
+        } else if(json_decode($chat->metadata)->type == 'interactive'){
+            if($chatmetadata['interactive']['type'] == 'button_reply'){
+                $text = $chatmetadata['interactive']['button_reply']['title'];
+            } else if($chatmetadata['interactive']['type'] == 'list_reply'){
+                $text = $chatmetadata['interactive']['list_reply']['title'];
+            }
+        }
+
+        $message = $text;
+
+        $metadata[$currentField['key']] = $message;
+
+        FlowUserData::where('contact_id', $contact->id)
+            ->update([
+                'metadata' => json_encode($metadata),
+                'input_index' => $currentFieldIndex + 1
+            ]);
+
+        /*
+        STEP 3: Ask next question
+        */
+
+        $nextFieldIndex = $currentFieldIndex;
+
+        if (isset($fields[$nextFieldIndex])) {
+
+            return $this->whatsappService->sendMessage(
+                $contact->uuid,
+                $fields[$nextFieldIndex]['question'],
+                'text'
+            );
+        }
+
+        /*
+        STEP 4: Finish input node
+        */
+
+        $confirmation = $nodeData['confirmation_message'] ?? 'Thank you';
+
+        $this->whatsappService->sendMessage(
+            $contact->uuid,
+            $confirmation,
+            'text'
+        );
+
+        /*
+        STEP 5: Move to next flow node
+        */
+
+        FlowUserData::where('contact_id', $contact->id)
+            ->update([
+                'input_index' => 0,
+                'current_step' => $id
+            ]);
+
+        return true;
+    }
+
+
+
 
     private function prepareHeader(array $fieldsArray): array
     {

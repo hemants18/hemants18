@@ -27,7 +27,7 @@ class BlogAuthorController extends BaseController
     * @return Response
     */
     public function index(Request $request){
-        return Inertia::render('Admin/Faq/Index', [
+        return Inertia::render('Admin/Blog/Author', [
             'title' => __('FAQs'),
             'rows' => $this->blogAuthorService->get($request), 
             'filters' => $request->all()
@@ -35,30 +35,18 @@ class BlogAuthorController extends BaseController
     }
 
     /**
-     * Display Form
-     *
-     * @param $request
-     */
-    public function create(Request $request)
-    {
-        $query = $this->blogAuthorService->getByUuid(NULL);
-
-        return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
-    }
-
-    /**
      * Store record.
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreFaq $request)
+    public function store(StoreBlogAuthor $request)
     {
         $this->blogAuthorService->store($request);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/authors')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq added successfully!')
+                'message' => __('Author added successfully!')
             ]
         );
     }
@@ -72,8 +60,7 @@ class BlogAuthorController extends BaseController
     public function show($id)
     {
         $query = $this->blogAuthorService->getByUuid($id);
-
-        return Inertia::render('Admin/Faq/Show', ['title' => __('FAQs'), 'faq' => $query]);
+        return response()->json(['success' => true, 'item'=> $query]);
     }
 
     /**
@@ -82,14 +69,14 @@ class BlogAuthorController extends BaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(StoreFaq $request, $id)
+    public function update(StoreBlogAuthor $request, $id)
     {
         $this->blogAuthorService->store($request, $id);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/authors')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq updated successfully!')
+                'message' => __('Author updated successfully!')
             ]
         );
     }
@@ -104,10 +91,10 @@ class BlogAuthorController extends BaseController
     {
         $this->blogAuthorService->delete($id);
 
-        return redirect('/admin/faqs')->with(
+        return redirect('/admin/blog/authors')->with(
             'status', [
                 'type' => 'success', 
-                'message' => __('Faq deleted successfully!')
+                'message' => __('Author deleted successfully!')
             ]
         );
     }

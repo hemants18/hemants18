@@ -79,12 +79,12 @@
                         <span>{{ $t('Subscription plans') }}</span>
                     </Link>
                 </li>
-                <!-- <li class="hover:bg-slate-50 hover:text-black rounded-[5px] px-2 truncate" :class="$page.url.startsWith('/admin/blog/posts') ? 'bg-slate-50 text-black' : ''">
+                <li class="hover:bg-slate-50 hover:text-black rounded-[5px] px-2 truncate" :class="$page.url.startsWith('/admin/blog/posts') ? 'bg-slate-50 text-black' : ''">
                     <Link rel="noopener noreferrer" href="/admin/blog/posts" class="flex items-center p-2 space-x-3 rounded-md">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" ><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5,16 C3.343,16 2,17.343 2,19 C2,20.657 3.343,22 5,22 C6.657,22 8,20.657 8,19 C8,17.343 6.657,16 5,16 L5,16 L5,16 Z M5,1 C14.925,1 23,9.075 23,19 L23,19 M18,19 C18,11.832 12.168,6 5,6 M13,19 C13,14.589 9.411,11 5,11 M2,11 L2,19 L2,19"></path></svg>
                         <span>{{ $t('Blogs') }}</span>
                     </Link>
-                </li> -->
+                </li>
 
                 <li class="hover:bg-slate-50 hover:text-black rounded-[5px] px-2 truncate" :class="$page.url.startsWith('/admin/faqs') ? 'bg-slate-50 text-black' : ''">
                     <Link rel="noopener noreferrer" href="/admin/faqs" class="flex items-center p-2 space-x-3 rounded-md">

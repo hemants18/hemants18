@@ -22,9 +22,9 @@ class BlogResource extends JsonResource
         if(isset($this->publish_date)){
             $data['publish_date'] = DateTimeHelper::formatDate($this->publish_date);
         }
-        if(isset($this->created_at)){
-            $data['created_at'] = DateTimeHelper::formatDate($this->created_at);
-        }
+        // if(isset($this->created_at)){
+        //     $data['created_at'] = DateTimeHelper::formatDate($this->created_at);
+        // }
 
         return $data;
     }

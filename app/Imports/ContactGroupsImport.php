@@ -97,5 +97,3 @@ class ContactGroupsImport implements ToModel, WithHeadingRow
         return $this->totalImports;
     }
 }
-
-
