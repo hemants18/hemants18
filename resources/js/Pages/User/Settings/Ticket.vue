@@ -72,6 +72,69 @@
                             </div>
                         </div>
                     </div>
+
+                    <div v-if="form.auto_assignment" class="bg-white border border-slate-200 rounded-lg pt-2 text-sm pb-4 mb-4 px-4 mb-20">
+                        <h4 class="text-[15px] mb-2">{{ $t('Assignment Strategy') }}</h4>
+
+                        <div class="grid grid-cols-3 gap-3">
+
+                            <div @click="form.assignment_strategy = 'round_robin'"
+                                 class="border rounded-lg p-3 cursor-pointer"
+                                 :class="form.assignment_strategy === 'round_robin' ? 'border-primary bg-gray-50' : ''">
+                                <div class="font-medium text-sm">{{ $t('Round Robin') }}</div>
+                                <div class="text-xs text-slate-500"> {{ $t('Evenly distribute chats') }} </div>
+                            </div>
+
+                            <div @click="form.assignment_strategy = 'least_active'"
+                                 class="border rounded-lg p-3 cursor-pointer"
+                                 :class="form.assignment_strategy === 'least_active' ? 'border-primary bg-gray-50' : ''">
+                                <div class="font-medium text-sm">{{ $t('Least Active') }}</div>
+                                <div class="text-xs text-slate-500">{{  $t('Agent with least chats') }}</div>
+                            </div>
+
+                            <div @click="form.assignment_strategy = 'random'"
+                                 class="border rounded-lg p-3 cursor-pointer"
+                                 :class="form.assignment_strategy === 'random' ? 'border-primary bg-gray-50' : ''">
+                                <div class="font-medium text-sm">{{ $t('Random') }}</div>
+                                <div class="text-xs text-slate-500"> {{ $t('Random assignment') }}</div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div v-if="form.auto_assignment" class="bg-white border border-slate-200 rounded-lg pt-2 text-sm pb-4 mb-4 px-4 mb-20">
+                        <div class="w-full py-2 mb-4 mt-2">
+                            <div class="flex w-full">
+                                <div class="w-3/4 text-md">
+                                    <h4 class="text-[16px]">{{ $t('Agent capacity') }}</h4>
+                                    <div class="mb-1 text-slate-500">{{ $t('Maximum open chats per agent.') }}</div>                                 
+                                    <div class="mb-1 text-slate-500">{{ $t('for unlimited use -1.') }}</div>                                 
+                                </div>
+                                <div class="w-1/4">
+                                    <FormInput type="number" v-model="form.agent_capacity" :error="form.errors.agent_capacity" :name="''" :type="'text'" :class="'col-span-4'" placeholder="Agent capacity.."/>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                    <div v-if="form.auto_assignment" class="bg-white border border-slate-200 rounded-lg pt-2 text-sm pb-4 mb-4 px-4 mb-20">
+                        
+                        <div class="w-full py-2 mb-4 mt-2">
+                            <div class="flex w-full">
+                                <div class="w-3/4 text-md">
+                                    <h4 class="text-[16px]">{{ $t('Assign chats only to online agents') }}</h4>
+                                    <div class="mb-1 text-slate-500">{{ $t('Offline agents will not receive new chats.') }}</div>                                 
+                                </div>
+                                <div class="w-1/4">
+                                    <div class="ml-auto w-12 h-6 flex items-center bg-gray-300 rounded-full p-1" :class="{ 'bg-primary': form.online_agents_only}" @click="toggleState4()">
+                                        <div class="bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ease-in-out" :class="{ 'translate-x-6': form.online_agents_only}"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div v-if="form.active" class="bg-white border border-slate-200 rounded-lg pt-2 text-sm mb-4 px-4 mb-20">
                         <div class="w-full py-2 mb-4 mt-2">
                             <div class="flex w-full">
@@ -87,7 +150,7 @@
                             </div>
                         </div>
                     </div>
-                    <div v-if="form.active" class="bg-white border border-slate-200 rounded-lg pt-2 text-sm mb-4 px-4 mb-20">
+                    <div v-if="form.active" class="bg-white border border-slate-200 rounded-lg pt-2 text-sm mb-4 pb-4 px-4 mb-20">
                         <div class="w-full py-2 mb-4 mt-2">
                             <div class="flex w-full">
                                 <div class="w-3/4 text-md">
@@ -112,6 +175,7 @@
     import { ref, watch } from 'vue';
     import { useForm } from "@inertiajs/vue3";
     import { trans } from 'laravel-vue-i18n';
+    import FormInput from '@/Components/FormInput.vue';
 
     const props = defineProps({ rows: Object, filters: Object, settings: Object });
     const config = ref(props.settings.metadata);
@@ -122,6 +186,10 @@
         auto_assignment: settings.value?.tickets?.auto_assignment ?? false,
         reassign_reopened_chats: settings.value?.tickets?.reassign_reopened_chats ?? false,
         allow_agents_to_view_all_chats: settings.value?.tickets?.allow_agents_to_view_all_chats ?? false,
+
+        assignment_strategy: settings.value?.tickets?.assignment_strategy ?? 'round_robin',
+        agent_capacity : settings.value?.tickets?.agent_capacity ?? '-1',
+        online_agents_only : settings.value?.tickets?.online_agents_only ?? false
     });
 
     const toggleState1 = () => {
@@ -136,6 +204,11 @@
 
     const toggleState3 = () => {
         form.allow_agents_to_view_all_chats = !form.allow_agents_to_view_all_chats;
+        submitForm();
+    }
+
+    const toggleState4 = () => {
+        form.online_agents_only = !form.online_agents_only; 
         submitForm();
     }
 

@@ -32,3 +32,14 @@ Broadcast::channel('agents.{organizationId}', function ($user, $organizationId) 
 Broadcast::channel('chats', function ($user) {
     return true; // Adjust authentication logic if needed
 });
+
+Broadcast::channel('online-agents.{company}', function ($user, $company) {
+
+    if ($user->teams[0]?->organization_id == $company) {
+        return [
+            'id' => $user->id,
+            'name' => $user->full_name,
+        ];
+    }
+
+});

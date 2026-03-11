@@ -65,7 +65,7 @@
     const submitForm = async (event) => {
         isLoading.value = true;
 
-        form1.put('./profile/', {
+        form1.put('/profile/', {
             preserveScroll: true,
             onFinish: () => {
                 isLoading.value = false;
@@ -76,7 +76,7 @@
     const submitForm3 = async (event) => {
         isLoading.value = true;
 
-        form3.put('./profile/password', {
+        form3.put('/profile/password', {
             preserveScroll: true,
             onFinish: () => {
                 isLoading.value = false;

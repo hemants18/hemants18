@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, watchEffect, computed, onMounted } from 'vue';
+    import { ref, watchEffect, watch, computed, onMounted } from 'vue';
     import axios from 'axios';
     import { router, useForm, Link, usePage } from '@inertiajs/vue3'
     import AlertModal from '@/Components/AlertModal.vue';
@@ -11,6 +11,7 @@
     import FormTextArea from '@/Components/FormTextArea.vue';
     import FormToggleSwitch from '@/Components/FormToggleSwitch.vue';
     import Modal from '@/Components/Modal.vue';
+    import { onlineAgents, initAgentPresence } from "@/agentPresence";
     import { trans } from 'laravel-vue-i18n';
 
     const props = defineProps({
@@ -41,6 +42,7 @@
     const isLoading = ref(false);
     const tagOptions = ref([]);
     const isOpenTagModal = ref(false);
+    const loadedUsers = ref([]);
     const user = ref({ 
         'label' : props.ticket?.user ? props.ticket?.user?.full_name  : trans('Unassigned'),
         'value' : props.ticket?.user ? props.ticket?.user?.id  : 0, 
@@ -109,12 +111,32 @@
             })
             .then(response => response.json())
             .then(result => {
-                setOptions(result.rows);
+                loadedUsers.value = result.rows.map((user) => ({
+                    ...user,
+                    online: onlineAgents.value.includes(user.id),
+                }));
+                
+                setOptions(loadedUsers.value)
+                // setOptions(result.rows);
             })
             .catch(error => {
                 console.error("Error fetching agents:", error);
             });
     }
+
+    watch(onlineAgents, (newVal) => {
+
+        //  console.log('onlineAgents',onlineAgents.value);
+        // console.log('newVal',newVal);
+
+        if (!loadedUsers.value.length) return;
+        loadedUsers.value = loadedUsers.value.map(u => ({
+            ...u,
+            online: newVal.includes(u.id)
+        }));
+        loadedUsers.value = [...loadedUsers.value];
+    });
+
 
     const submitForm = () => {
         form2.contact = props.contact.uuid;
@@ -167,6 +189,9 @@
 
     onMounted(() => {
         tagOptions.value = transformOptions(props.tags);
+        const companyId = accountUser.value.teams[0]?.organization_id;
+        // console.log('initAgentPresence');
+        initAgentPresence(companyId);
     });
 
 </script>
@@ -189,7 +214,7 @@
                         <span @click="toggleView">{{ contact.formatted_phone_number }}</span>
                     </div>
                 </div>
-                <FormSelectCombo v-if="ticketingIsEnabled && accountUser.teams[0]['role'] != 'agent'" v-model="user" :name="''" :loadOptions="loadUsers" :class="'col-span-1 md:block hidden'" :placeholder="'Select Agent'" @update:modelValue="changeTicketAgent()"/>
+                <FormSelectCombo :key="loadedUsers.length + onlineAgents.length" v-if="ticketingIsEnabled && accountUser.teams[0]['role'] != 'agent'" v-model="user" :name="''" :loadOptions="loadUsers" :class="'col-span-1 md:block hidden'" :placeholder="'Select Agent'" @update:modelValue="changeTicketAgent()"/>
             </div>
         </div>
         <div>

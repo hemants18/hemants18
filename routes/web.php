@@ -27,7 +27,7 @@ Route::get('/run-queue', function () {
 Route::post('/ask-ai', [App\Http\Controllers\User\AiController::class, 'ask']);
 
 Route::get('/current-locale', function () {
-    return response()->json(['locale' => app()->getLocale()]);
+    return response()->json(['locale' => app()->getLocale(),'organization'=>session()->get('current_organization')]);
 });
 
 Route::get('/locales', function () {
@@ -225,7 +225,9 @@ Route::middleware(['auth:user'])->group(function () {
                 Route::group(['middleware' => 'check.client.role'], function () {
                     Route::get('/settings', [App\Http\Controllers\User\SettingController::class, 'index']);
                     Route::get('/settings/m', [App\Http\Controllers\User\SettingController::class, 'mobileView']);
-                    Route::get('/settings/subscriber', [App\Http\Controllers\User\SettingController::class, 'optInOrOut']);
+                    Route::get('/settings/optin', [App\Http\Controllers\User\SettingController::class, 'optInOrOut']);
+                    Route::post('/settings/optin', [App\Http\Controllers\User\SettingController::class, 'optInOrOut']);
+                    Route::post('/settings/optin/toggle', [App\Http\Controllers\User\SettingController::class, 'optInToggle']);
 
                     Route::get('/settings/whatsapp', [App\Http\Controllers\User\SettingController::class, 'viewWhatsappSettings']);
                     Route::get('/settings/plugins', [App\Http\Controllers\User\PluginController::class, 'index']);

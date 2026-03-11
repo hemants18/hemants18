@@ -1,5 +1,6 @@
 import { createApp, h, watchEffect } from 'vue';
 import { createPinia } from 'pinia'
+import { initAgentPresence } from '@/agentPresence'
 import { createInertiaApp } from '@inertiajs/vue3';
 import VueApexCharts from 'vue3-apexcharts';
 import VueTelInput from 'vue-tel-input';
@@ -107,6 +108,7 @@ createInertiaApp({
     // Fetch the current locale and available locales from the Laravel backend
     axios.get('/current-locale').then(async (response) => {
       const currentLocale = response.data.locale;
+      const organization = response.data.organization;
       const availableLocales = await fetchAvailableLocales();
 
       const i18n = createI18n({
@@ -124,6 +126,9 @@ createInertiaApp({
         .use(i18n)
         .mount(el);
 
+        // initialize presence channel
+        initAgentPresence(organization);
+        
       // Load the default locale messages
       if (availableLocales.includes(currentLocale)) {
         loadLocaleMessages(currentLocale).then(messages => {

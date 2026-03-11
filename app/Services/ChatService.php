@@ -19,6 +19,7 @@ use App\Models\Team;
 use App\Models\Template;
 use App\Services\SubscriptionService;
 use App\Services\WhatsappService;
+use App\Services\ChatAssignmentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -269,6 +270,7 @@ class ChatService
     }
 
     public function handleTicketAssignment($contactId){
+
         $organizationId = $this->organizationId;
         $settings = Organization::where('id', $this->organizationId)->first();
         $settings = json_decode($settings->metadata);
@@ -292,11 +294,18 @@ class ChatService
                     // Perform auto-assignment if enabled
                     if($autoassignment){
                         // Find an agent with the least number of assigned tickets
-                        $agent = Team::where('organization_id', $organizationId)
-                            ->withCount('tickets')->orderBy('tickets_count')->first();
+                        // $agent = Team::where('organization_id', $organizationId)
+                        //     ->withCount('tickets')->orderBy('tickets_count')->first();
 
-                        // Assign the ticket to the agent with the least number of assigned tickets
-                        $ticket->assigned_to = $agent->user_id;
+                        // // Assign the ticket to the agent with the least number of assigned tickets
+                        // $ticket->assigned_to = $agent->user_id;
+
+
+                        //add new update on 11-03-2026
+                        $service = new ChatAssignmentService($organizationId);
+                        $agentId = $service->assignAgent($ticket);
+                        $ticket->assigned_to = $agentId;
+
                     } else {
                         $ticket->assigned_to = NULL;
                     }

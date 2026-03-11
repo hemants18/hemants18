@@ -12,11 +12,11 @@
     import { usePage } from "@inertiajs/vue3";
     import axios from 'axios';
     import Sidebar from "./Sidebar.vue";
-    import { /*onMounted, onBeforeUnmount,*/ defineProps, ref, computed, watch , provide} from 'vue';
+    import { onMounted, defineProps, ref, computed, watch , provide} from 'vue';
     import { toast } from 'vue3-toastify';
     import MobileSidebar from "./MobileSidebar.vue";
     import 'vue3-toastify/dist/index.css';
-    // import { getEchoInstance } from '@/echo'
+    import { initAgentPresence } from "@/agentPresence";
 
     const viewTopBar = ref(true);
     const user = computed(() => usePage().props.auth.user);
@@ -43,46 +43,8 @@
         alert('test');
     };
 
-    // const onlineAgents = ref([])
-
-    // onMounted(() => {
-    //     const echo = getEchoInstance()
-    //     echo.join(`agents.${organization.value.id}`)
-    //         .here(users => {
-    //             onlineAgents.value = users
-    //             syncOnline(users)
-    //         })
-    //         .joining(user => {
-    //             markOnline(user)
-    //         })
-    //         .leaving(user => {
-    //             markOffline(user)
-    //         })
-    // })
-
-    // onBeforeUnmount(() => {
-    //     const echo = getEchoInstance()
-    //     echo.leave(`agents.${organization.value.id}`)
-    // })
-
-    // function syncOnline(users) {
-    //     users.forEach(user => markOnline(user))
-    // }
-
-    // function markOnline(user) {
-    //     axios.post('/team/update-status', {
-    //         user_id: user.id,
-    //         status : 'online',
-    //     })
-    // }
-
-    // function markOffline(user) {
-    //     axios.post('/team/update-status', {
-    //         user_id: user.id,
-    //         status : 'offline',
-    //     })
-    // }
-
-
+    onMounted(() => {
+        initAgentPresence(organization.value.id)
+    })
 
 </script>

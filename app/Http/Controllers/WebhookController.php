@@ -184,6 +184,7 @@ class WebhookController extends BaseController
 
                         //Check if contact exists in organization
                         $contact = Contact::where('organization_id', $organization->id)->where('phone', $phone)->whereNull('deleted_at')->first();
+
                         $isNewContact = false;
                         if(!$contact){
                             //Create a contact
@@ -210,6 +211,8 @@ class WebhookController extends BaseController
                                     'first_name' => $contactData ? $contactData['name'] : null,
                                 ]);
                             }
+                            //update out-out contact
+                            $contact->update([ 'is_subscribe' => 'Y' ]);
 
                             $chat = Chat::where('wam_id', $response['id'])->where('organization_id', $organization->id)->first();
 

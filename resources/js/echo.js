@@ -3,7 +3,7 @@ import Pusher from 'pusher-js';
 
 let echoInstance = null;
 
-export function getEchoInstance(pusherKey, pusherCluster) {
+export function getEchoInstance(pusherKey=null, pusherCluster=null) {
     if (!echoInstance) {
         // window.Pusher = Pusher;
         // echoInstance = new Echo({

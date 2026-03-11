@@ -48,9 +48,11 @@
             
             props.loadOptions(q, results => {
                 options.value = Object.values(results).map(user => {
+                     const online = user?.online ?? false; 
                     return {
                         value: user.id,
-                        label: `${user.first_name} ${user.last_name}`
+                        label: `${user.first_name} ${user.last_name}`,
+                        online: online
                     };
                 });
 
@@ -167,12 +169,32 @@
                                     'text-gray-900': !active,
                                     }"
                                 >
+
                                     <span
+                                        class="flex items-center gap-2 truncate"
+                                        :class="{'font-medium': selected, 'font-normal': !selected}"
+                                        >
+
+                                        <span
+                                        v-if="option?.online"
+                                        class="w-2 h-2 rounded-full bg-green-500"
+                                        ></span>
+
+                                        <span
+                                        v-else
+                                        class="w-2 h-2 rounded-full bg-gray-300"
+                                        ></span>
+
+                                        {{ option.label }}
+
+                                        </span>
+
+                                    <!-- <span
                                     class="block truncate"
                                     :class="{'font-medium': selected, 'font-normal': !selected}"
                                     >
                                     {{ option.label }}
-                                    </span>
+                                    </span> -->
                                     <span
                                     v-if="selected"
                                     class="absolute inset-y-0 left-0 flex items-center pl-3"

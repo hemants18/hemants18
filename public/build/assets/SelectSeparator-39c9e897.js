@@ -1,0 +1,1 @@
+import{D as o}from"./index-f8d6b909.js";import{c as r}from"./utils-3f044a58.js";import{B as t,o as c,f as n,n as l,u as s}from"./app-52d038c3.js";const _=t({__name:"SelectSeparator",props:{asChild:{type:Boolean},as:{},class:{}},setup(a){const e=a;return(p,m)=>(c(),n(s(o),{class:l(s(r)("-mx-1 my-1 h-px bg-muted",e.class))},null,8,["class"]))}});export{_ as default};

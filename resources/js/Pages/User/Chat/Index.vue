@@ -147,6 +147,13 @@
             const response = await axios.get('/chats');
             if (response?.data?.result) {
                 rows.value = response.data.result;
+                const matchedContact = rows.value.data.find(
+                    c => c.id === contact.value.id
+                );
+
+                if (matchedContact) {
+                    contact.value = matchedContact;
+                }
             }
         } catch (error) {
             console.error('Error updating side panel:', error);

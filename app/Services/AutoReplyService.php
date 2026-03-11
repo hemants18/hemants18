@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Services\MediaService;
 use App\Services\WhatsappService;
 use App\Services\SubscriptionService;
+use App\Services\OptinSettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -124,12 +125,72 @@ class AutoReplyService
         $this->replySequence($organizationId, $chat, $isNewContact);
     }
 
+    /**
+     * for unsubscribe and subscribe
+     * @param Array|object
+     * */
+
+    private function checkOptInOut($chat)
+    {
+        $OptinSettingService = new OptinSettingService($chat->organization_id);
+        $settings = $OptinSettingService->getSettings();
+
+        if (!$settings) {
+            return false;
+        }
+        
+        if (!$settings || !$settings->subscription_enabled) {
+            return false;
+        }
+
+        $unsubscribeKeywords = json_decode($settings->unsubscribe_keywords, true);
+        $subscribeKeywords   = json_decode($settings->subscription_keywords, true);
+
+        $msg = json_decode($chat->metadata, true);
+
+        if (!isset($msg['text']['body'])) {
+            return false;
+        }
+
+        $messageText = strtolower(trim($msg['text']['body']));
+
+        // CHECK UNSUBSCRIBE
+        if ($unsubscribeKeywords) {
+            if ($unsubscribeKeywords && in_array($messageText, array_map('strtolower', $unsubscribeKeywords))) {
+                return ['name' => 'opt-out', 'msg' => $settings->unsubscribe_message];
+            }
+        }
+
+        // CHECK SUBSCRIBE
+        if ($subscribeKeywords) {
+            if ($subscribeKeywords && in_array($messageText, array_map('strtolower', $subscribeKeywords))) {
+                return ['name' => 'opt-in', 'msg' => $settings->subscribe_message];
+            }
+        }
+
+        return false;
+    }
+
     private function replySequence($organizationId, $chat, $isNewContact)
     {
         $organizationConfig = Organization::where('id', $organizationId)->first();
         $metadataArray = $organizationConfig->metadata ? json_decode($organizationConfig->metadata, true) : [];
         $activeFlow = false;
         $modulePath = base_path('modules/FlowBuilder');
+
+        //check OptIn Or OptOut
+        $otpin = $this->checkOptInOut($chat);
+
+        if(is_array($otpin) && !empty($otpin))
+        {
+            //send opt-in or opt-out msg
+            $contact = Contact::where('id', $chat->contact_id)->first();
+            $contact->is_subscribe = $otpin['name'] == 'opt-out' ? 'N' : 'Y';
+            $contact->save();
+
+            $this->initializeWhatsappService($organizationId)->sendMessage($contact->uuid, $otpin['msg']);
+            return true;
+        }
 
         if (File::exists($modulePath)) {
             if (class_exists(\Modules\FlowBuilder\Services\FlowExecutionService::class)) {

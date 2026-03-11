@@ -11,7 +11,7 @@ use App\Models\Addon;
 use App\Models\Contact;
 use App\Models\Setting;
 use App\Models\Template;
-use App\Services\ContactFieldService;
+use App\Services\{ContactFieldService,OptinSettingService};
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -144,36 +144,42 @@ class SettingController extends BaseController
 
     public function optInOrOut(Request $request){
         if ($request->isMethod('get')) {
-            $contactFieldService = new ContactFieldService(session()->get('current_organization'));
+            $OptinSettingService = new OptinSettingService(session()->get('current_organization'));
             $settings = Organization::where('id', session()->get('current_organization'))->first();
-
+            $row = $OptinSettingService->getSettings();
+            if ($row) {
+                $row->subscription_keywords = implode(',', json_decode($row->subscription_keywords ?? '[]', true));
+                $row->unsubscribe_keywords = implode(',', json_decode($row->unsubscribe_keywords ?? '[]', true));
+            }
             return Inertia::render('User/Settings/Subscriber', [
                 'title' => __('Settings'),
-                'filters' => $request->all(),
-                'rows' => $contactFieldService->get($request),
+                'rows' => $row,
                 'settings' => $settings,
                 'modules' => Addon::get(),
             ]);
         } else if($request->isMethod('post')) {
             $currentOrganizationId = session()->get('current_organization');
-            $organizationConfig = Organization::where('id', $currentOrganizationId)->first();
-    
-            $metadataArray = $organizationConfig->metadata ? json_decode($organizationConfig->metadata, true) : [];
-
-            $metadataArray['contacts']['location'] = $request->location;
-
-            $updatedMetadataJson = json_encode($metadataArray);
-
-            $organizationConfig->metadata = $updatedMetadataJson;
-            $organizationConfig->save();
-
+            $OptinSettingService = new OptinSettingService(session()->get('current_organization'));
+            $OptinSettingService->saveSettings($request);
             return back()->with(
                 'status', [
                     'type' => 'success', 
-                    'message' => __('Settings updated successfully')
+                    'message' => __('Opt-In updated successfully')
                 ]
             );
         }
+    }
+
+    public function optInToggle(Request $request)
+    {
+        $optIn = new OptinSettingService(session()->get('current_organization'));
+        $optIn->toggle($request);
+        return redirect('/settings/optin')->with(
+            'status', [
+                'type' => 'success', 
+                'message' => __('Opt-In updated successfully!')
+            ]
+        );
     }
 
     public function contacts(Request $request){
@@ -232,6 +238,9 @@ class SettingController extends BaseController
             $metadataArray['tickets']['auto_assignment'] = $request->auto_assignment;
             $metadataArray['tickets']['reassign_reopened_chats'] = $request->reassign_reopened_chats;
             $metadataArray['tickets']['allow_agents_to_view_all_chats'] = $request->allow_agents_to_view_all_chats;
+            $metadataArray['tickets']['assignment_strategy'] = $request->assignment_strategy;
+            $metadataArray['tickets']['auto_assignment'] = $request->auto_assignment;
+            $metadataArray['tickets']['online_agents_only'] = $request->online_agents_only;
 
             $updatedMetadataJson = json_encode($metadataArray);
 
@@ -254,7 +263,7 @@ class SettingController extends BaseController
 
         if(isset($config['whatsapp'])){
             $accessToken = $config['whatsapp']['access_token'] ?? null;
-            $apiVersion = 'v20.0';
+            $apiVersion = config('graph.api_version');
             $appId = $config['whatsapp']['app_id'] ?? null;
             $phoneNumberId = $config['whatsapp']['phone_number_id'] ?? null;
             $wabaId = $config['whatsapp']['waba_id'] ?? null;
